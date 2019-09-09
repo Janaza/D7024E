@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-	fmt.Println("hello world")
 	Listener()
 }
 func ErrorHandler(err error){
@@ -17,11 +16,13 @@ func ErrorHandler(err error){
 }
 
 func Listener(){
-	fmt.Println("Testing Listen...")
-	servr, err := net.ListenUDP("udp", &net.UDPAddr{IP:[]byte{0,0,0,0},Port:10001,Zone:""})
+	fmt.Println("Server is starting...")
+	listenAdrs, _ := net.ResolveUDPAddr("udp", "localhost:10001")
+	servr, err := net.ListenUDP("udp", listenAdrs)
 	ErrorHandler(err)
-	//defer servr.Close()
+	defer servr.Close()
 	for{
+		fmt.Println("Listening on: " + string(listenAdrs.String()))
 		msgbuf := make([]byte, 1024)
 		n, adrs, err := servr.ReadFrom(msgbuf)
 		ErrorHandler(err)
