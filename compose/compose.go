@@ -39,7 +39,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	file, err := os.Create("nodes.JSON")
+	file, err := os.Create("../nodes.JSON")
 	if err != nil {
 		log.Fatal(err)
 	}
