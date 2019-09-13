@@ -8,17 +8,17 @@ func Listen(ip string, port int) {
 }
 
 func (network *Network) SendPingMessage(contact *Contact) {
-	// TODO
+	// TODO PING
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact) {
-	// TODO
+	// TODO FIND_NODE
 }
 
 func (network *Network) SendFindDataMessage(hash string) {
-	// TODO
+	// TODO FIND_VALUE
 }
 
 func (network *Network) SendStoreMessage(data []byte) {
-	// TODO
+	// TODO STORE
 }
