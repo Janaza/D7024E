@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 )
 
 //Very unsure about this struct =)
@@ -60,9 +61,17 @@ func Listen(ip string, port int) {
 
 //Just an example of sending a message to func Listen
 func (network *Network) SendPing(contact *Contact) {
+	host, port, err := net.SplitHostPort(contact.Address)
+	if err != nil {
+		log.Fatal(err)
+	}
+	iport, err := strconv.Atoi(port)
+	if err != nil {
+		log.Fatal(err)
+	}
 	addr := net.UDPAddr{
-		IP:   net.ParseIP(contact.Address),
-		Port: 1,
+		IP:   net.ParseIP(host),
+		Port: iport,
 	}
 
 	conn, err := net.DialUDP("udp", nil, &addr)

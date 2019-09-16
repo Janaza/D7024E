@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"d7024e"
 	"fmt"
 	"log"
@@ -40,20 +41,37 @@ func main() {
 		bIP = os.Args[2]
 		bNode = os.Args[3]
 		if bIP != "" && bNode != "" {
+			//Make contact of bootstrap node.
 			bContact := d7024e.NewContact(d7024e.NewKademliaID(bNode), bIP)
+			//RPC PING node c and update buckets
+			//newNode.Network.SendPingMessage(&bContact)
+
 			//Example
 			newNode.Network.SendPing(&bContact)
 			//Example
 
-			//RPC PING node c and update buckets
-			//newNode.Network.SendPingMessage(&bContact)
 			//iterativeFindNode for new node n
 			//newNode.LookupContact(&me)
 		}
 
 	}
-	wg.Add(1)
-	go d7024e.Listen("127.0.0.1", iPort) //Handle any RPC
+	wg.Add(2)
+	go d7024e.Listen("127.0.0.1", iPort) //Handle any RPC change ip to myip (externalIP())
+	go func() {                          //Handle cli at the same time as RCP
+		cli := bufio.NewScanner(os.Stdin)
+		for {
+			fmt.Println("cli: ")
+			cli.Scan()
+			text := cli.Text()
+			if len(text) != 0 {
+				fmt.Println(text)
+				if text[:4] == "PING" {
+					node := (d7024e.NewContact(nil, text[5:]))
+					newNode.Network.SendPing(&node)
+				}
+			}
+		}
+	}()
 	wg.Wait()
 
 }
