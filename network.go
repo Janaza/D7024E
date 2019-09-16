@@ -95,6 +95,7 @@ func (network *Network) SendPing(contact *Contact) {
 //*Network is sender, *Contact is reciver? See main.go:40
 func (network *Network) SendPingMessage(contact *Contact) {
 	// TODO PING
+	//retrive actual nodeid from node we pinged
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact) {

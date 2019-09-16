@@ -27,37 +27,39 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if myip == "" {
+		myip = "127.0.0.1"
+	}
 	me := d7024e.NewContact(d7024e.NewRandomKademliaID(), myip+":"+myport)
 	fmt.Println("I am: ", me.ID, me.Address)
 	newNode := d7024e.InitNode(me, iPort)
 
-	//Set newNode up for RCP listeing
-
 	//Read ip & node from args (node to join)
 	bIP := ""
-	bNode := ""
-	if len(os.Args[1:]) == 3 {
-		//A known bootstrap node (c) was given
+	//bNode := ""
+	//Check if a known bootstrap node (c) was given
+	if len(os.Args[1:]) == 2 {
 		bIP = os.Args[2]
-		bNode = os.Args[3]
-		if bIP != "" && bNode != "" {
+		//bNode = os.Args[3] we dont need to know nodeID only ip:port
+		if bIP != "" {
 			//Make contact of bootstrap node.
-			bContact := d7024e.NewContact(d7024e.NewKademliaID(bNode), bIP)
+			bContact := d7024e.NewContact(nil, bIP)
+
 			//RPC PING node c and update buckets
-			//newNode.Network.SendPingMessage(&bContact)
+			newNode.Network.SendPingMessage(&bContact)
 
 			//Example
 			newNode.Network.SendPing(&bContact)
 			//Example
 
 			//iterativeFindNode for new node n
-			//newNode.LookupContact(&me)
+			newNode.LookupContact(&me)
 		}
 
 	}
 	wg.Add(2)
-	go d7024e.Listen("127.0.0.1", iPort) //Handle any RPC change ip to myip (externalIP())
-	go func() {                          //Handle cli at the same time as RCP
+	go d7024e.Listen(myip, iPort) //Handle any RPC
+	go func() {                   //Handle cli at the same time as RCP
 		cli := bufio.NewScanner(os.Stdin)
 		for {
 			fmt.Println("cli: ")
