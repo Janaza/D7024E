@@ -6,11 +6,16 @@ import (
 	"log"
 	"net"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 )
 
+var wg sync.WaitGroup
+
 func main() {
+	runtime.GOMAXPROCS(1)
 	//Read port from args
 	myport := os.Args[1]
 	iPort, err := strconv.Atoi(myport)
@@ -26,7 +31,7 @@ func main() {
 	newNode := d7024e.InitNode(me, iPort)
 
 	//Set newNode up for RCP listeing
-	d7024e.Listen(myip, iPort)
+
 	//Read ip & node from args (node to join)
 	bIP := ""
 	bNode := ""
@@ -36,13 +41,20 @@ func main() {
 		bNode = os.Args[3]
 		if bIP != "" && bNode != "" {
 			bContact := d7024e.NewContact(d7024e.NewKademliaID(bNode), bIP)
+			//Example
+			newNode.Network.SendPing(&bContact)
+			//Example
+
 			//RPC PING node c and update buckets
-			newNode.Network.SendPingMessage(&bContact)
+			//newNode.Network.SendPingMessage(&bContact)
 			//iterativeFindNode for new node n
-			newNode.LookupContact(&me)
+			//newNode.LookupContact(&me)
 		}
 
 	}
+	wg.Add(1)
+	go d7024e.Listen("127.0.0.1", iPort) //Handle any RPC
+	wg.Wait()
 
 }
 func ErrorHandler(err error) {
