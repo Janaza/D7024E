@@ -1,21 +1,58 @@
 package main
 
 import (
+	"d7024e"
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"strconv"
+	"strings"
 )
 
 func main() {
-	Listener()
+	//Read port from args
+	myport := os.Args[1]
+	iPort, err := strconv.Atoi(myport)
+	if err != nil {
+		log.Fatal(err)
+	}
+	myip, err := externalIP()
+	if err != nil {
+		log.Fatal(err)
+	}
+	me := d7024e.NewContact(d7024e.NewRandomKademliaID(), myip+":"+myport)
+	fmt.Println("I am: ", me.ID, me.Address)
+	newNode := d7024e.InitNode(me, iPort)
+
+	//Set newNode up for RCP listeing
+	d7024e.Listen(myip, iPort)
+	//Read ip & node from args (node to join)
+	bIP := ""
+	bNode := ""
+	if len(os.Args[1:]) == 3 {
+		//A known bootstrap node (c) was given
+		bIP = os.Args[2]
+		bNode = os.Args[3]
+		if bIP != "" && bNode != "" {
+			bContact := d7024e.NewContact(d7024e.NewKademliaID(bNode), bIP)
+			//RPC PING node c and update buckets
+			newNode.Network.SendPingMessage(&bContact)
+			//iterativeFindNode for new node n
+			newNode.LookupContact(&me)
+		}
+
+	}
+
 }
-func ErrorHandler(err error){
-	if err != nil{
+func ErrorHandler(err error) {
+	if err != nil {
 		log.Fatal(err)
 	}
 }
+
 //get my outbound ip
-func GetOutboundIP() net.IP {
+/*func GetOutboundIP() net.IP {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		log.Fatal(err)
@@ -24,8 +61,7 @@ func GetOutboundIP() net.IP {
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 	return localAddr.IP
 }
-
-
+*/
 func externalIP() (string, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -57,32 +93,33 @@ func externalIP() (string, error) {
 			if ip == nil {
 				continue // not an ipv4 address
 			}
-			return ip.String(), nil
+			if strings.Index(ip.String(), "10.") == 0 { //IP should start at 10.
+				return ip.String(), nil
+			}
+
 		}
 	}
 	return "", err
 }
 
-func Listener(){
+/*func Listener() {
 	fmt.Println("Server is starting...")
 	hej, _ := externalIP()
 	fmt.Println(hej)
 	//myip := GetOutboundIP()
 	//ip must be of type string
 	//myip2 := myip.String()
-	listenAdrs, _ := net.ResolveUDPAddr("udp", hej+ ":10001")
+	listenAdrs, _ := net.ResolveUDPAddr("udp", hej+":10001")
 	servr, err := net.ListenUDP("udp", listenAdrs)
 	ErrorHandler(err)
 	defer servr.Close()
-	for{
+	for {
 		fmt.Println(net.Interfaces())
 		fmt.Println("Listening on: " + string(listenAdrs.String()))
 		msgbuf := make([]byte, 1024)
 		n, adrs, err := servr.ReadFrom(msgbuf)
 		ErrorHandler(err)
-		fmt.Println("Msg from a friend: ", string(msgbuf[0:n])," from ", adrs)
+		fmt.Println("Msg from a friend: ", string(msgbuf[0:n]), " from ", adrs)
 	}
 
-
-
-}
+}*/
