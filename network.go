@@ -12,13 +12,16 @@ type Network struct {
 	address string
 	port    int
 	me      Contact
+	Kad     *Kademlia
 }
 
-func InitNetwork(ip string, port int, me Contact) *Network {
-	network := &Network{}
-	network.address = ip
-	network.port = port
-	network.me = me
+func InitNode(ip string, port int, me Contact) *Network {
+	network := &Network{
+		address: ip,
+		port:    port,
+		me:      me,
+		Kad:     InitKad(me),
+	}
 	return network
 }
 
