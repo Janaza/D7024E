@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"d7024e"
+	d "d7024e"
 	"fmt"
 	"log"
 	"net"
@@ -18,22 +18,24 @@ var wg sync.WaitGroup
 func main() {
 	runtime.GOMAXPROCS(1)
 	//Read port from args
-	myport := os.Args[1]
+	myport := "1"
+	if len(os.Args) > 1 {
+		myport = os.Args[1]
+	}
 	iPort, err := strconv.Atoi(myport)
 	if err != nil {
-		log.Fatal(err)
+		ErrorHandler(err)
 	}
 	myip, err := externalIP()
 	if err != nil {
-		log.Fatal(err)
+		ErrorHandler(err)
 	}
 	if myip == "" {
 		myip = "127.0.0.1"
 	}
-	me := d7024e.NewContact(d7024e.NewRandomKademliaID(), myip+":"+myport)
+	me := d.NewContact(d.NewRandomKademliaID(), myip+":"+myport)
 	fmt.Println("I am: ", me.ID, me.Address)
-	newNode := d7024e.InitNode(me, iPort)
-
+	newNode := d.InitNode(myip, iPort, me)
 	//Read ip & node from args (node to join)
 	bIP := ""
 	//bNode := ""
@@ -43,23 +45,23 @@ func main() {
 		//bNode = os.Args[3] we dont need to know nodeID only ip:port
 		if bIP != "" {
 			//Make contact of bootstrap node.
-			bContact := d7024e.NewContact(nil, bIP)
+			bContact := d.NewContact(nil, bIP)
 
 			//RPC PING node c and update buckets
-			newNode.Network.SendPingMessage(&bContact)
+			newNode.SendPingMessage(&bContact)
 
 			//Example
-			newNode.Network.SendPing(&bContact)
+			newNode.SendPing(&bContact)
 			//Example
 
 			//iterativeFindNode for new node n
-			newNode.LookupContact(&me)
+			newNode.Kad.LookupContact(&me)
 		}
 
 	}
 	wg.Add(2)
-	go d7024e.Listen(myip, iPort) //Handle any RPC
-	go func() {                   //Handle cli at the same time as RCP
+	go d.Listen(myip, iPort) //Handle any RPC
+	go func() {              //Handle cli at the same time as RCP
 		cli := bufio.NewScanner(os.Stdin)
 		for {
 			fmt.Println("cli: ")
@@ -68,8 +70,8 @@ func main() {
 			if len(text) != 0 {
 				fmt.Println(text)
 				if text[:4] == "PING" {
-					node := (d7024e.NewContact(nil, text[5:]))
-					newNode.Network.SendPing(&node)
+					node := d.NewContact(nil, text[5:])
+					newNode.SendPing(&node)
 				}
 			}
 		}
@@ -83,17 +85,6 @@ func ErrorHandler(err error) {
 	}
 }
 
-//get my outbound ip
-/*func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-	return localAddr.IP
-}
-*/
 func externalIP() (string, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -125,7 +116,7 @@ func externalIP() (string, error) {
 			if ip == nil {
 				continue // not an ipv4 address
 			}
-			if strings.Index(ip.String(), "10.") == 0 { //IP should start at 10.
+			if strings.Index(ip.String(), "10.") == 0 { //IP should start at 10. within containers
 				return ip.String(), nil
 			}
 
@@ -133,25 +124,3 @@ func externalIP() (string, error) {
 	}
 	return "", err
 }
-
-/*func Listener() {
-	fmt.Println("Server is starting...")
-	hej, _ := externalIP()
-	fmt.Println(hej)
-	//myip := GetOutboundIP()
-	//ip must be of type string
-	//myip2 := myip.String()
-	listenAdrs, _ := net.ResolveUDPAddr("udp", hej+":10001")
-	servr, err := net.ListenUDP("udp", listenAdrs)
-	ErrorHandler(err)
-	defer servr.Close()
-	for {
-		fmt.Println(net.Interfaces())
-		fmt.Println("Listening on: " + string(listenAdrs.String()))
-		msgbuf := make([]byte, 1024)
-		n, adrs, err := servr.ReadFrom(msgbuf)
-		ErrorHandler(err)
-		fmt.Println("Msg from a friend: ", string(msgbuf[0:n]), " from ", adrs)
-	}
-
-}*/

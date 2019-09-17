@@ -1,14 +1,12 @@
 package d7024e
 
 type Kademlia struct {
-	Rtable  *RoutingTable
-	Network *Network
+	Rtable *RoutingTable
 }
 
-func InitNode(me Contact, port int) *Kademlia {
+func InitKad(me Contact) *Kademlia {
 	node := &Kademlia{
-		Rtable:  NewRoutingTable(me),
-		Network: InitNetwork(me.Address, port, me),
+		Rtable: NewRoutingTable(me),
 	}
 	return node
 }
