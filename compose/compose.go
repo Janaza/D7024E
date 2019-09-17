@@ -1,12 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
-	"time"
 )
 
 func initSwarm() error {
@@ -33,7 +30,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	time.Sleep(10 * time.Second)
+	/*time.Sleep(10 * time.Second)
 	cmd3 := exec.Command("docker", "inspect", "d7024e_kademlia_network")
 	out, err := cmd3.Output()
 	if err != nil {
@@ -48,5 +45,5 @@ func main() {
 	_, err = io.WriteString(file, fmt.Sprintf(string(out)))
 	if err != nil {
 		log.Fatal(err)
-	}
+	}*/
 }
