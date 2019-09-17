@@ -1,4 +1,4 @@
-package main
+package d7024e
 
 import (
 	"fmt"
@@ -7,7 +7,9 @@ import (
 )
 
 func main() {
-	Listener()
+	contact := NewContact(NewRandomKademliaID(), "localhost:8000")
+	fmt.Println(contact)
+	PingMsg(&contact)
 }
 func ErrorHandler(err error){
 	if err != nil{

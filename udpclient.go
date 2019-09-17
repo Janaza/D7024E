@@ -1,4 +1,4 @@
-package main
+package d7024e
 
  import (
         "strings"
@@ -9,7 +9,7 @@ package main
         "fmt"
  )
 
- func main() {
+ func main2() {
         remoteAddr := bufio.NewScanner(os.Stdin)
         arr := make([]string, 0)
         for {
