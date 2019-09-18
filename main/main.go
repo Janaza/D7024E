@@ -54,7 +54,8 @@ func main() {
 			}
 
 			//iterativeFindNode for new node n
-			newNode.Kad.LookupContact(&me)
+			contacts := make(chan Contact)
+			newNode.Kad.LookupContact(newNode, contacts, &me)
 
 			//Update the k-buckets further away than the one bootstrap node falls in
 			for i := 160; i > newNode.Kad.Rtable.GetBucketIndex(findBootstrap[0].ID); i-- {
