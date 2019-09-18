@@ -1,8 +1,8 @@
 package main
 
 import (
+	d "Kademlia2019/D70024E"
 	"bufio"
-	d "d7024e"
 	"fmt"
 	"log"
 	"net"
@@ -23,19 +23,15 @@ func main() {
 		myport = os.Args[1]
 	}
 	iPort, err := strconv.Atoi(myport)
-	if err != nil {
-		ErrorHandler(err)
-	}
+	ErrorHandler(err)
 	myip, err := externalIP()
-	if err != nil {
-		ErrorHandler(err)
-	}
+	ErrorHandler(err)
 	if myip == "" {
 		myip = "127.0.0.1"
 	}
 	me := d.NewContact(d.NewRandomKademliaID(), myip+":"+myport)
 	fmt.Println("I am: ", me.ID, me.Address)
-	newNode := d.InitNode(myip, iPort, me)
+	newNode := d.InitNode(myip, iPort, &me)
 	//Read ip & node from args (node to join)
 	bIP := ""
 	//bNode := ""
@@ -50,28 +46,24 @@ func main() {
 			//RPC PING node c and update buckets
 			newNode.SendPingMessage(&bContact)
 
-			//Example
-			newNode.SendPing(&bContact)
-			//Example
-
 			//iterativeFindNode for new node n
 			newNode.Kad.LookupContact(&me)
 		}
 
 	}
 	wg.Add(2)
-	go d.Listen(myip, iPort) //Handle any RPC
-	go func() {              //Handle cli at the same time as RCP
+	go newNode.Listen(me, iPort) //Handle any RPC
+	go func() {                  //Handle cli at the same time as RCP
 		cli := bufio.NewScanner(os.Stdin)
+		fmt.Println("Listening on cli")
 		for {
-			fmt.Println("cli: ")
 			cli.Scan()
 			text := cli.Text()
 			if len(text) != 0 {
 				fmt.Println(text)
 				if text[:4] == "PING" {
 					node := d.NewContact(nil, text[5:])
-					newNode.SendPing(&node)
+					newNode.SendPingMessage(&node)
 				}
 			}
 		}

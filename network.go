@@ -1,104 +1,117 @@
-package d7024e
+package D7024E
 
 import (
 	"fmt"
 	"log"
 	"net"
-	"strconv"
+	"strings"
 )
 
-//Very unsure about this struct =)
 type Network struct {
-	address string
-	port    int
-	me      Contact
+	IP      string
+	Port    int
+	Contact *Contact
 	Kad     *Kademlia
 }
 
-func InitNode(ip string, port int, me Contact) *Network {
+func InitNode(ip string, port int, me *Contact) *Network {
 	network := &Network{
-		address: ip,
-		port:    port,
-		me:      me,
-		Kad:     InitKad(me),
+		IP:      ip,
+		Port:    port,
+		Contact: me,
+		Kad:     InitKad(*me),
 	}
 	return network
 }
 
-func Listen(ip string, port int) {
-	// TODO
-	//Handle any RPC from UDP
-	msg := make([]byte, 1024)
-	addr := net.UDPAddr{
-		IP:   net.ParseIP(ip),
-		Port: port,
-	}
-	recv, err := net.ListenUDP("udp", &addr)
+type response struct {
+	servr *net.UDPConn
+	resp  *net.UDPAddr
+}
+
+const ID_INDEX = 45
+
+func ErrorHandler(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+//creates the content of ping
+func PingMsg(contact *Contact) []byte {
+	msg := []byte("ping " + contact.ID.String() + " " + contact.Address)
+	return msg
+}
 
-	//listen for udp msgs e.g. node sends PING, respond PONG
+//handles incoming ping msgs
+func HandlePingMsg(msg []byte, resp response) Contact {
+	contactID := NewKademliaID(string(msg))
+	ipAndPort := ipToString(msg)
+	ipAndPortstring := strings.Split(ipAndPort, ":")
+	ip, port := ipAndPortstring[0], ipAndPortstring[1]
+	contactAdrs := ip
+	contactPort := port
+	contact := NewContact(contactID, contactAdrs+":"+contactPort)
+
+	reply := []byte("PONG")
+	_, err := resp.servr.WriteToUDP(reply, resp.resp)
+	ErrorHandler(err)
+	return contact
+}
+
+func ipToString(array []byte) string {
+	hej := string(array[1+ID_INDEX:])
+	return hej
+
+}
+
+func (network *Network) msgHandle(msg []byte, resp response) Contact {
+	var returnContact Contact
+	switch {
+	case string(msg[:4]) == "ping":
+		returnContact = HandlePingMsg(msg[5:], resp)
+	case string(msg[:4]) == "find":
+		fmt.Println("find node")
+	default:
+		returnContact = NewContact(nil, "")
+	}
+	return returnContact
+}
+
+func (network *Network) Listen(contact Contact, port int) {
+	fmt.Println("Kademlia listener is starting...")
+	listenAdrs, err := net.ResolveUDPAddr("udp", contact.Address)
+	ErrorHandler(err)
+	servr, err := net.ListenUDP("udp", listenAdrs)
+	ErrorHandler(err)
+	defer servr.Close()
+	fmt.Println("Listening on: " + listenAdrs.String() + " " + contact.ID.String())
 	for {
-		log.Printf("listening...")
-		n, returnAddr, err := recv.ReadFromUDP(msg)
-		if err != nil {
-			log.Fatal(err)
+		msgbuf := make([]byte, 2048)
+		n, resp, err := servr.ReadFromUDP(msgbuf)
+		ErrorHandler(err)
+		Response := &response{
+			servr: servr,
+			resp:  resp,
 		}
-		log.Printf("received %v bytes, ret addr %v, msg %s", n, returnAddr, string(msg[:n]))
-
-		//check if pinged if msg == ping etc...
-		if string(msg[:4]) == "PING" {
-			reply := []byte(fmt.Sprintf("PONG"))
-			n, err = recv.WriteToUDP(reply, returnAddr)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		//if string(msg[:n]) == "SendFindContactMessage" + "contact" call func SendFindContactMessage etc...
+		handledContact := network.msgHandle(msgbuf[:n], *Response)
+		fmt.Println("Msg from a friend: ", handledContact)
 
 	}
-
 }
-
-//Just an example of sending a message to func Listen
-func (network *Network) SendPing(contact *Contact) {
-	host, port, err := net.SplitHostPort(contact.Address)
-	if err != nil {
-		log.Fatal(err)
-	}
-	iport, err := strconv.Atoi(port)
-	if err != nil {
-		log.Fatal(err)
-	}
-	addr := net.UDPAddr{
-		IP:   net.ParseIP(host),
-		Port: iport,
-	}
-
-	conn, err := net.DialUDP("udp", nil, &addr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	n, err := conn.Write([]byte("PING " + (network.me.ID.String()))) //send ping with my KadID
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("sent: "+string([]byte("PING "))+network.me.ID.String()+" %d bytes \nTo ip "+contact.Address+":"+"%d", n, addr.Port)
-	msg := make([]byte, 1024)
-	n, err = conn.Read(msg)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("server replied with: %s \n", string(msg[:n]))
-	return
-}
-
-//*Network is sender, *Contact is reciver? See main.go:40
 func (network *Network) SendPingMessage(contact *Contact) {
-	// TODO PING
-	//retrive actual nodeid from node we pinged
+	me := network.Contact
+	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
+	connection, err := net.DialUDP("udp", nil, RemoteAddress)
+	ErrorHandler(err)
+	defer connection.Close()
+	msg := PingMsg(me)
+	_, err = connection.Write(msg)
+	ErrorHandler(err)
+	fmt.Println("sent: " + string(msg))
+	respmsg := make([]byte, 1024)
+	n, err := connection.Read(respmsg)
+	ErrorHandler(err)
+	fmt.Println(string(respmsg[:n]))
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact) {
