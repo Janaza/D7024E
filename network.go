@@ -29,7 +29,7 @@ type response struct {
 	resp  *net.UDPAddr
 }
 
-const ID_INDEX = 45
+const ID_INDEX = 40
 
 func ErrorHandler(err error) {
 	if err != nil {
@@ -43,8 +43,9 @@ func PingMsg(contact *Contact) []byte {
 }
 
 //handles incoming ping msgs
-func HandlePingMsg(msg []byte, resp response) Contact {
-	contactID := NewKademliaID(string(msg))
+func (network *Network) HandlePingMsg(msg []byte, resp response) Contact {
+	fmt.Println(string(msg))
+	contactID := NewKademliaID(string(msg[:ID_INDEX]))
 	ipAndPort := ipToString(msg)
 	ipAndPortstring := strings.Split(ipAndPort, ":")
 	ip, port := ipAndPortstring[0], ipAndPortstring[1]
@@ -52,7 +53,7 @@ func HandlePingMsg(msg []byte, resp response) Contact {
 	contactPort := port
 	contact := NewContact(contactID, contactAdrs+":"+contactPort)
 
-	reply := []byte("PONG")
+	reply := []byte("PONG from " + network.Contact.Address)
 	_, err := resp.servr.WriteToUDP(reply, resp.resp)
 	ErrorHandler(err)
 	return contact
@@ -68,7 +69,8 @@ func (network *Network) msgHandle(msg []byte, resp response) Contact {
 	var returnContact Contact
 	switch {
 	case string(msg[:4]) == "ping":
-		returnContact = HandlePingMsg(msg[5:], resp)
+		returnContact = network.HandlePingMsg(msg[5:], resp)
+		network.Kad.Rtable.AddContact(returnContact)
 	case string(msg[:4]) == "find":
 		fmt.Println("find node")
 	default:
@@ -94,7 +96,10 @@ func (network *Network) Listen(contact Contact, port int) {
 			resp:  resp,
 		}
 		handledContact := network.msgHandle(msgbuf[:n], *Response)
+		//network.Kad.Rtable.AddContact(handledContact)
 		fmt.Println("Msg from a friend: ", handledContact)
+		hej := network.Kad.Rtable.FindClosestContacts(contact.ID, 20)
+		fmt.Println(hej)
 
 	}
 }
