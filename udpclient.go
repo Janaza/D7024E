@@ -1,4 +1,4 @@
-package d7024e
+package D7024E
 
 import (
 	"bufio"
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func Udpclient() {
+func main2() {
 	remoteAddr := bufio.NewScanner(os.Stdin)
 	arr := make([]string, 0)
 	for {
