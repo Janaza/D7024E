@@ -20,3 +20,14 @@ func TestRoutingTable(t *testing.T) {
 		fmt.Println(contacts[i].String())
 	}
 }
+func TestPingMsg(t *testing.T) {
+	contact := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
+	testMsg := PingMsg(&contact)
+	if string(testMsg) == "ping ffffffffffffffffffffffffffffffffffffffff localhost:8000"{
+		fmt.Println("Förväntat resultat uppnått")
+
+	} else{
+		fmt.Println("Nej, fel resultat")
+	}
+
+}

@@ -29,15 +29,20 @@ type response struct {
 	resp  *net.UDPAddr
 }
 
-const ID_INDEX = 40
+const ID_INDEX = 45
 
+func ErrorHandler(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 //creates the content of ping
 func PingMsg(contact *Contact) []byte {
 	msg := []byte("ping " + contact.ID.String() + " " + contact.Address)
 	return msg
 }
 
-//handles ping msgs
+//handles incoming ping msgs
 func HandlePingMsg(msg []byte, resp response) Contact {
 	contactID := NewKademliaID(string(msg))
 	ipAndPort := ipToString(msg)
@@ -107,12 +112,6 @@ func (network *Network) SendPingMessage(contact *Contact) {
 	n, err := connection.Read(respmsg)
 	ErrorHandler(err)
 	fmt.Println(string(respmsg[:n]))
-}
-
-func ErrorHandler(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact) {
