@@ -1,4 +1,4 @@
-package d7024e
+package D7024E
 
 import (
 	"fmt"

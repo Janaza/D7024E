@@ -1,8 +1,9 @@
-package d7024e
+package D7024E
 
 import (
 	"encoding/hex"
 	"math/rand"
+	"time"
 )
 
 // the static number of bytes in a KademliaID
@@ -27,6 +28,7 @@ func NewKademliaID(data string) *KademliaID {
 // change this to a better version if you like
 func NewRandomKademliaID() *KademliaID {
 	newKademliaID := KademliaID{}
+	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < IDLength; i++ {
 		newKademliaID[i] = uint8(rand.Intn(256))
 	}
@@ -53,7 +55,7 @@ func (kademliaID KademliaID) Equals(otherKademliaID *KademliaID) bool {
 	return true
 }
 
-// CalcDistance returns a new instance of a KademliaID that is built 
+// CalcDistance returns a new instance of a KademliaID that is built
 // through a bitwise XOR operation betweeen kademliaID and target
 func (kademliaID KademliaID) CalcDistance(target *KademliaID) *KademliaID {
 	result := KademliaID{}
