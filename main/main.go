@@ -1,8 +1,9 @@
 package main
 
 import (
-	d "Kademlia2019/D70024E"
+	d "D7024E"
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -46,8 +47,19 @@ func main() {
 			//RPC PING node c and update buckets
 			newNode.SendPingMessage(&bContact)
 
+			//Check if my bucket was updated
+			findBootstrap := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
+			if len(findBootstrap) == 0 {
+				ErrorHandler(errors.New("Pinging bootstrap failed or buckets weren't updated!"))
+			}
+
 			//iterativeFindNode for new node n
 			newNode.Kad.LookupContact(&me)
+
+			//Update the k-buckets further away than the one bootstrap node falls in
+			for i := 160; i > newNode.Kad.Rtable.GetBucketIndex(findBootstrap[0].ID); i-- {
+				newNode.SendPingMessage(&findBootstrap[i])
+			}
 		}
 
 	}
