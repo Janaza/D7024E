@@ -32,6 +32,7 @@ func main() {
 	}
 	me := d.NewContact(d.NewRandomKademliaID(), myip+":"+myport)
 	fmt.Println("I am: ", me.ID, me.Address+"\n")
+	fmt.Println("I am: ", me.ID, me.Address)
 	newNode := d.InitNode(myip, iPort, &me)
 	//Read ip & node from args (node to join)
 	bIP := ""
@@ -54,13 +55,19 @@ func main() {
 			}
 
 			//iterativeFindNode for new node n
-			contacts := make(chan Contact)
-			newNode.Kad.LookupContact(newNode, contacts, &me)
+			//
+			if iPort == 40 {
+				newNode.IterativeFindNode()
+			}
 
 			//Update the k-buckets further away than the one bootstrap node falls in
-			for i := 160; i > newNode.Kad.Rtable.GetBucketIndex(findBootstrap[0].ID); i-- {
-				newNode.SendPingMessage(&findBootstrap[i])
-			}
+			/*
+				for i := 160; i > newNode.Kad.Rtable.GetBucketIndex(findBootstrap[0].ID); i-- {
+					for k := 20; k < 20; k++ {
+						newNode.SendPingMessage(&findBootstrap[i])
+
+					}
+				}*/
 		}
 
 	}
@@ -80,7 +87,7 @@ func main() {
 				}
 				if text[:4] == "FIND" {
 					node := d.NewContact(d.NewKademliaID(text[5:]), text[46:])
-					newNode.SendFindContactMessage(&node)
+					newNode.SendFindContactMessage(&node, make(chan []d.Contact))
 				}
 			}
 		}

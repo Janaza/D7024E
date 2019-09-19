@@ -75,10 +75,8 @@ func (network *Network) HandleFindNodeMsg(msg []byte, resp response) []Contact {
 	closeContactsByte := make([]byte, 0)
 
 	for i := 0; i < len(closeContactsArr); i++ {
-		//Contacts for reciver
-		closeCToByte = []byte(closeContactsArr[i].ID.String() + " " + closeContactsArr[i].Address + "\n") //seperate contacts by newline
+		closeCToByte = []byte(closeContactsArr[i].ID.String() + " " + closeContactsArr[i].Address + " " + closeContactsArr[i].distance.String() + "\n")
 		closeContactsByte = append(closeContactsByte, closeCToByte[:]...)
-		//This fills terminal so i removed it...
 	}
 
 	returnMsg := make([]Contact, 1)
@@ -174,7 +172,7 @@ func (network *Network) SendPingMessage(contact *Contact) {
 
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact, result chan []Contact) {
+func (network *Network) SendFindContactMessage(contact *Contact, found chan []Contact) {
 	//me := network.Contact
 	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
@@ -190,6 +188,10 @@ func (network *Network) SendFindContactMessage(contact *Contact, result chan []C
 	ErrorHandler(err)
 	fmt.Println("Got following contacts: ")
 	fmt.Println(string(respmsg[:n]))
+	found <- byteToContact(respmsg[:n])
+	//x := <-result
+	//fmt.Println(x[0].Address)
+
 }
 
 func (network *Network) SendFindDataMessage(hash string) {
@@ -199,9 +201,27 @@ func (network *Network) SendFindDataMessage(hash string) {
 func (network *Network) SendStoreMessage(data []byte) {
 	// TODO STORE
 }
+func (network *Network) IterativeFindNode() {
+	result := make(chan []Contact)
+	network.Kad.LookupContact(*network, result, *network.Contact)
+	done := <-result
+	fmt.Println(done[0].ID)
+	fmt.Println("Im done")
+}
 
-func byteToContact([]byte msg) []Contact {
-	for _, b := range msg {
-		
+func byteToContact(msg []byte) []Contact {
+	s := string(msg)
+	slice := strings.Split(s, "\n")
+	arr := make([]Contact, 0)
+	//var contact Contact
+	for _, line := range slice {
+		if len(line) != 0 {
+			contact := NewContact(NewKademliaID(line[:40]), line[41:41+strings.Index(line[41:], " ")])
+			if len(line[41+strings.Index(line[41:], " "):]) > 2 {
+				contact.distance = NewKademliaID(line[41+strings.Index(line[41:], " "):])
+			}
+			arr = append(arr, contact)
+		}
 	}
+	return arr
 }
