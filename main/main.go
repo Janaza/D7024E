@@ -1,7 +1,7 @@
 package main
 
 import (
-	d "D7024E"
+	d "Kademlia2019/D70024E"
 	"bufio"
 	"fmt"
 	"log"
