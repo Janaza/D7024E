@@ -75,10 +75,10 @@ func (network *Network) HandleFindNodeMsg(msg []byte, resp response) []Contact {
     var closeC Contact
     closeContacts := make([]Contact, len(closeContactsArr))
     for i := 0; i < len(closeContactsArr); i++{
-
-        closeCToByte = []byte(closeContactsArr[i].ID.String() + " " + closeContactsArr[i].Address)
+		//Contacts for reciver
+        closeCToByte = []byte(closeContactsArr[i].ID.String() + " " + closeContactsArr[i].Address +"\n") //seperate contacts by newline
         closeContactsByte = append(closeContactsByte, closeCToByte[:]...)
-        //fmt.Println(string(closeContactsByte))
+        //Contacts for funcion return
         closeC = NewContact(closeContactsArr[i].ID, closeContactsArr[i].Address)
         closeContacts = append(closeContacts, closeC)
     }
