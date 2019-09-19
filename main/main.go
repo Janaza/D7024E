@@ -1,7 +1,7 @@
 package main
 
 import (
-	d "Kademlia2019/D70024E"
+	d "D7024E"
 	"bufio"
 	"fmt"
 	"log"
@@ -30,7 +30,7 @@ func main() {
 		myip = "127.0.0.1"
 	}
 	me := d.NewContact(d.NewRandomKademliaID(), myip+":"+myport)
-	fmt.Println("I am: ", me.ID, me.Address)
+	fmt.Println("I am: ", me.ID, me.Address + "\n")
 	newNode := d.InitNode(myip, iPort, &me)
 	//Read ip & node from args (node to join)
 	bIP := ""
