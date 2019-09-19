@@ -14,30 +14,30 @@ func InitKad(me Contact) *Kademlia {
 func (kademlia *Kademlia) LookupContact(net Network, result chan []Contact, target Contact) {
 	// TODO iterativeFindNode
 	alpha := 3
-	candidates := make([]Contact, 20)
+	found := make(chan Contact)
+
+	shortlist := make([]Contact, 0)
+	var closestNode Contact
 	myClosest := net.Kad.Rtable.FindClosestContacts(target.ID, alpha)
 	doublet := make(map[Contact]bool)
 	for _, mine := range myClosest {
-		candidates = append(candidates, mine)
+		shortlist = append(shortlist, mine)
 		doublet[mine] = true
 	}
 	runningRoutines := 0
 	for runningRoutines < 3 {
 		runningRoutines++
-		go net.SendFindContactMessage(&candidates[runningRoutines]) //add channel
+		go net.SendFindContactMessage(&shortlist[runningRoutines], found) //add channel
 	}
 
 	for runningRoutines > 0 {
-		/*listen on go routine channel
-		newCandidates := <- channel
+		recived := <-found
 		for _, candidate := range newCandidates {
 			if d[candidate] != true {
-			candidates = append(candidates, candidate)
+				shortlist = append(shortlist, candidate)
 			}
 		}
 
-
-		*/
 	}
 
 }

@@ -176,7 +176,7 @@ func (network *Network) SendPingMessage(contact *Contact) {
 
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact) {
+func (network *Network) SendFindContactMessage(contact *Contact, result chan []Contact) {
 	//me := network.Contact
    	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
    	connection, err := net.DialUDP("udp", nil, RemoteAddress)
@@ -202,4 +202,10 @@ func (network *Network) SendFindDataMessage(hash string) {
 
 func (network *Network) SendStoreMessage(data []byte) {
 	// TODO STORE
+}
+
+func byteToContact([]byte msg) []Contact {
+	for _, b := range msg {
+		
+	}
 }
