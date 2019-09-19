@@ -40,8 +40,8 @@ func ErrorHandler(err error) {
 func PingMsg(contact *Contact) []byte {
 	msg := []byte("ping " + contact.ID.String() + " " + contact.Address)
 	return msg
-}
 
+}
 //handles incoming ping msgs
 func (network *Network) HandlePingMsg(msg []byte, resp response) Contact {
 	fmt.Println(string(msg))
@@ -53,15 +53,25 @@ func (network *Network) HandlePingMsg(msg []byte, resp response) Contact {
 	contactPort := port
 	contact := NewContact(contactID, contactAdrs+":"+contactPort)
 
-	reply := []byte("PONG from " + network.Contact.Address)
+	reply := []byte("PONG " + network.Contact.ID.String() +" "+ network.Contact.Address)
 	_, err := resp.servr.WriteToUDP(reply, resp.resp)
 	ErrorHandler(err)
 	return contact
 }
+func HandlePongMsg(msg []byte) Contact{
+	contactID := NewKademliaID(string(msg[:ID_INDEX]))
+	ipAndPort := ipToString(msg)
+	ipAndPortstring := strings.Split(ipAndPort, ":")
+	ip, port := ipAndPortstring[0], ipAndPortstring[1]
+	contactAdrs := ip
+	contactPort := port
+	contact := NewContact(contactID, contactAdrs+":"+contactPort)
+	return contact
+}
 
 func ipToString(array []byte) string {
-	hej := string(array[1+ID_INDEX:])
-	return hej
+	ipString := string(array[1+ID_INDEX:])
+	return ipString
 
 }
 
@@ -96,10 +106,12 @@ func (network *Network) Listen(contact Contact, port int) {
 			resp:  resp,
 		}
 		handledContact := network.msgHandle(msgbuf[:n], *Response)
-		//network.Kad.Rtable.AddContact(handledContact)
 		fmt.Println("Msg from a friend: ", handledContact)
-		hej := network.Kad.Rtable.FindClosestContacts(contact.ID, 20)
-		fmt.Println(hej)
+
+		//kontrollerar CC
+		closestContacts := network.Kad.Rtable.FindClosestContacts(contact.ID, 20)
+		fmt.Println("Here are the recivers CCs")
+		fmt.Println(closestContacts)
 
 	}
 }
@@ -116,7 +128,18 @@ func (network *Network) SendPingMessage(contact *Contact) {
 	respmsg := make([]byte, 1024)
 	n, err := connection.Read(respmsg)
 	ErrorHandler(err)
+
+	if string(respmsg[:4]) == "PONG"{
+		fmt.Println("Adding the following PONGER to a Bucket...")
+		pongContact := HandlePongMsg(respmsg[5:n])
+		network.Kad.Rtable.AddContact(pongContact)
+		fmt.Println(pongContact.ID.String() +" "+ pongContact.Address)
+		closestContacts := network.Kad.Rtable.FindClosestContacts(pongContact.ID, 3)
+		fmt.Println("Here are the Senders CCs")
+		fmt.Println(closestContacts)
+	}
 	fmt.Println(string(respmsg[:n]))
+
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact) {

@@ -18,7 +18,7 @@ var wg sync.WaitGroup
 func main() {
 	runtime.GOMAXPROCS(1)
 	//Read port from args
-	myport := "2"
+	myport := "1"
 	if len(os.Args) > 1 {
 		myport = os.Args[1]
 	}
