@@ -46,6 +46,7 @@ func main() {
 			//RPC PING node c and update buckets
 			newNode.SendPingMessage(&bContact)
 
+
 			//iterativeFindNode for new node n
 			newNode.Kad.LookupContact(&me)
 		}
@@ -64,6 +65,10 @@ func main() {
 				if text[:4] == "PING" {
 					node := d.NewContact(nil, text[5:])
 					newNode.SendPingMessage(&node)
+				}
+				if text[:4] == "FIND" {
+				    node := d.NewContact(d.NewKademliaID(text[5:]), text[46:])
+                    newNode.SendFindContactMessage(&node)
 				}
 			}
 		}
