@@ -30,7 +30,7 @@ func main() {
 		myip = "127.0.0.1"
 	}
 	me := d.NewContact(d.NewRandomKademliaID(), myip+":"+myport)
-	fmt.Println("I am: ", me.ID, me.Address)
+	fmt.Println("I am: ", me.ID, me.Address + "\n")
 	newNode := d.InitNode(myip, iPort, &me)
 	//Read ip & node from args (node to join)
 	bIP := ""
@@ -45,6 +45,7 @@ func main() {
 
 			//RPC PING node c and update buckets
 			newNode.SendPingMessage(&bContact)
+
 
 			//iterativeFindNode for new node n
 			newNode.Kad.LookupContact(&me)
@@ -64,6 +65,10 @@ func main() {
 				if text[:4] == "PING" {
 					node := d.NewContact(nil, text[5:])
 					newNode.SendPingMessage(&node)
+				}
+				if text[:4] == "FIND" {
+				    node := d.NewContact(d.NewKademliaID(text[5:]), text[46:])
+                    newNode.SendFindContactMessage(&node)
 				}
 			}
 		}
