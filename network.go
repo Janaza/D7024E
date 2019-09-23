@@ -196,6 +196,16 @@ func (network *Network) SendFindDataMessage(hash string) {
 	// TODO FIND_VALUE
 }
 
-func (network *Network) SendStoreMessage(data []byte) {
-	// TODO STORE
+func (network *Network) SendStoreMessage(data []byte, hash string, contact *Contact) {
+	me := network.Contact
+	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
+	connection, err := net.DialUDP("udp", nil, RemoteAddress)
+	ErrorHandler(err)
+	defer connection.Close()
+	msg := StoreMsg(me)
+	_, err = connection.Write(msg)
+	ErrorHandler(err)
+}
+func (network *Network) StoreMsg(data []byte){
+
 }
