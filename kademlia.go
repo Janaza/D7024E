@@ -45,6 +45,7 @@ func (kademlia *Kademlia) LookupContact(net Network, result chan []Contact, targ
 		for _, candidate := range recived {
 			if doublet[candidate] != true {
 				doublet[candidate] = true
+				fmt.Println(candidate.String())
 				shortlist.contacts = append(shortlist.contacts, candidate)
 			}
 		}
@@ -62,6 +63,9 @@ func (kademlia *Kademlia) LookupContact(net Network, result chan []Contact, targ
 		}
 	}
 	if len(shortlist.contacts) > 20 {
+		for _, c := range shortlist.contacts {
+			fmt.Println("Result: " + c.String())
+		}
 		result <- shortlist.contacts[:20]
 	} else {
 		result <- shortlist.contacts

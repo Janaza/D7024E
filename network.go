@@ -188,7 +188,7 @@ func (network *Network) SendFindContactMessage(contact *Contact, found chan []Co
 	ErrorHandler(err)
 	fmt.Println("Got following contacts: ")
 	fmt.Println(string(respmsg[:n]))
-	found <- byteToContact(respmsg[:n])
+	found <- ByteToContact(respmsg[:n])
 	//x := <-result
 	//fmt.Println(x[0].Address)
 
@@ -209,7 +209,7 @@ func (network *Network) IterativeFindNode() {
 	fmt.Println("Im done")
 }
 
-func byteToContact(msg []byte) []Contact {
+func ByteToContact(msg []byte) []Contact {
 	s := string(msg)
 	slice := strings.Split(s, "\n")
 	arr := make([]Contact, 0)
