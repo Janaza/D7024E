@@ -31,7 +31,6 @@ func main() {
 		myip = "127.0.0.1"
 	}
 	me := d.NewContact(d.NewRandomKademliaID(), myip+":"+myport)
-	fmt.Println("I am: ", me.ID, me.Address+"\n")
 	fmt.Println("I am: ", me.ID, me.Address)
 	newNode := d.InitNode(myip, iPort, &me)
 	//Read ip & node from args (node to join)
@@ -57,6 +56,7 @@ func main() {
 			//iterativeFindNode for new node n
 			//
 			if iPort == 40 {
+				fmt.Println("Start IterativeFindNode()")
 				newNode.IterativeFindNode()
 			}
 
