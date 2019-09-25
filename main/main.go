@@ -3,6 +3,7 @@ package main
 import (
 	d "D7024E"
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -47,15 +48,14 @@ func main() {
 			newNode.SendPingMessage(&bContact)
 
 			//Check if my bucket was updated
-			/*findBootstrap := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
+			findBootstrap := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
 			if len(findBootstrap) == 0 {
 				ErrorHandler(errors.New("Pinging bootstrap failed or buckets weren't updated!"))
-			}*/
+			}
 
 			//iterativeFindNode for new node n
-			//
+			fmt.Println(newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160))
 			if iPort == 40 {
-				fmt.Println("Start IterativeFindNode()")
 				newNode.IterativeFindNode()
 			}
 

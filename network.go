@@ -188,9 +188,8 @@ func (network *Network) SendFindContactMessage(contact *Contact, found chan []Co
 	ErrorHandler(err)
 	fmt.Println("Got following contacts: ")
 	fmt.Println(string(respmsg[:n]))
-	found <- ByteToContact(respmsg[:n])
-	//x := <-result
-	//fmt.Println(x[0].Address)
+	c := ByteToContact(respmsg[:n])
+	found <- c
 
 }
 
@@ -203,10 +202,12 @@ func (network *Network) SendStoreMessage(data []byte) {
 }
 func (network *Network) IterativeFindNode() {
 	result := make(chan []Contact)
-	network.Kad.LookupContact(*network, result, *network.Contact)
+	go network.Kad.LookupContact(*network, result, *network.Contact)
 	done := <-result
-	fmt.Println(done[0].ID)
-	fmt.Println("Im done")
+	for _, c := range done {
+		network.Kad.Rtable.AddContact(c)
+	}
+	fmt.Printf("\nIterativeFindNode done, added %d contacts\n", len(done))
 }
 
 func ByteToContact(msg []byte) []Contact {
