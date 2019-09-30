@@ -32,6 +32,7 @@ func main() {
 	}
 	me := d.NewContact(d.NewRandomKademliaID(), myip+":"+myport)
 	fmt.Println("I am: ", me.ID, me.Address+"\n")
+
 	newNode := d.InitNode(myip, iPort, &me)
 	//Read ip & node from args (node to join)
 	bIP := ""
@@ -48,21 +49,26 @@ func main() {
 			newNode.SendPingMessage(&bContact)
 
 			//Check if my bucket was updated
-			findBootstrap := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
-			if len(findBootstrap) == 0 {
-				ErrorHandler(errors.New("Pinging bootstrap failed or buckets weren't updated!"))
+			myContacts := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
+			if len(myContacts) == 0 {
+				ErrorHandler(errors.New("pinging bootstrap failed or buckets weren't updated!"))
 			}
 
 			//iterativeFindNode for new node n
-			newNode.Kad.LookupContact(&me)
+			newNode.IterativeFindNode()
 
 			//Update the k-buckets further away than the one bootstrap node falls in
-			for i := 160; i > newNode.Kad.Rtable.GetBucketIndex(findBootstrap[0].ID); i-- {
-				newNode.SendPingMessage(&findBootstrap[i])
-			}
+			/*
+				for i := 160; i > newNode.Kad.Rtable.GetBucketIndex(findBootstrap[0].ID); i-- {
+					for k := 20; k < 20; k++ {
+						newNode.SendPingMessage(&findBootstrap[i])
+
+					}
+				}*/
 		}
 
 	}
+	out := make(chan []d.Contact)
 	wg.Add(2)
 	go newNode.Listen(me, iPort) //Handle any RPC
 	go func() {                  //Handle cli at the same time as RCP
@@ -79,7 +85,10 @@ func main() {
 				}
 				if text[:4] == "FIND" {
 					node := d.NewContact(d.NewKademliaID(text[5:]), text[46:])
-					newNode.SendFindContactMessage(&node)
+					go newNode.SendFindContactMessage(&node, out)
+					x := <-out
+					fmt.Println("Got following contacts: ")
+					fmt.Println(x)
 				}
 			}
 		}

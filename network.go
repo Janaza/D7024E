@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 	"strings"
-	
 )
 
 type Network struct {
@@ -37,6 +37,7 @@ func ErrorHandler(err error) {
 		log.Fatal(err)
 	}
 }
+
 //creates the content of ping
 func PingMsg(contact *Contact) []byte {
 	msg := []byte("ping " + contact.ID.String() + " " + contact.Address)
@@ -44,9 +45,10 @@ func PingMsg(contact *Contact) []byte {
 }
 
 func FindNodeMsg(contact *Contact) []byte {
- 	msg := []byte("FIND_NODE " + contact.ID.String())
- 	return msg
- }
+	msg := []byte("FIND_NODE " + contact.ID.String())
+	return msg
+}
+
 //handles incoming ping msgs
 func (network *Network) HandlePingMsg(msg []byte, resp response) []Contact {
 	fmt.Println(string(msg))
@@ -58,7 +60,7 @@ func (network *Network) HandlePingMsg(msg []byte, resp response) []Contact {
 	contactPort := port
 	contact := NewContact(contactID, contactAdrs+":"+contactPort)
 
-	reply := []byte("PONG " + network.Contact.ID.String() +" "+ network.Contact.Address)
+	reply := []byte("PONG " + network.Contact.ID.String() + " " + network.Contact.Address)
 	_, err := resp.servr.WriteToUDP(reply, resp.resp)
 	ErrorHandler(err)
 	contactArr := make([]Contact, 1)
@@ -67,29 +69,23 @@ func (network *Network) HandlePingMsg(msg []byte, resp response) []Contact {
 }
 
 func (network *Network) HandleFindNodeMsg(msg []byte, resp response) []Contact {
-    closeContactsArr := network.Kad.Rtable.FindClosestContacts(NewKademliaID(string(msg[:40])), 20)
+	closeContactsArr := network.Kad.Rtable.FindClosestContacts(NewKademliaID(string(msg[:40])), 20)
 
-    closeCToByte := make([]byte, len(closeContactsArr))
-    closeContactsByte := make([]byte, len(closeContactsArr))
+	closeCToByte := make([]byte, 0)
+	closeContactsByte := make([]byte, 0)
 
-    var closeC Contact
-    closeContacts := make([]Contact, len(closeContactsArr))
-    for i := 0; i < len(closeContactsArr); i++{
-		//Contacts for reciver
-        closeCToByte = []byte(closeContactsArr[i].ID.String() + " " + closeContactsArr[i].Address +"\n") //seperate contacts by newline
-        closeContactsByte = append(closeContactsByte, closeCToByte[:]...)
-        //Contacts for funcion return
-        closeC = NewContact(closeContactsArr[i].ID, closeContactsArr[i].Address)
-        closeContacts = append(closeContacts, closeC)
-    }
+	for i := 0; i < len(closeContactsArr); i++ {
+		closeCToByte = []byte(closeContactsArr[i].ID.String() + " " + closeContactsArr[i].Address + " " + closeContactsArr[i].distance.String() + "\n")
+		closeContactsByte = append(closeContactsByte, closeCToByte[:]...)
+	}
 
-
-	reply := closeContacts
+	returnMsg := make([]Contact, 1)
+	returnMsg[0] = NewContact(nil, " "+strconv.Itoa(len(closeContactsArr))+" contacts.")
 	_, err := resp.servr.WriteToUDP(closeContactsByte, resp.resp)
 	ErrorHandler(err)
-	return reply
+	return returnMsg
 }
-func HandlePongMsg(msg []byte) Contact{
+func HandlePongMsg(msg []byte) Contact {
 	contactID := NewKademliaID(string(msg[:ID_INDEX]))
 	ipAndPort := ipToString(msg)
 	ipAndPortstring := strings.Split(ipAndPort, ":")
@@ -128,7 +124,7 @@ func (network *Network) Listen(contact Contact, port int) {
 	servr, err := net.ListenUDP("udp", listenAdrs)
 	ErrorHandler(err)
 	defer servr.Close()
-	fmt.Println("Listening on: " + listenAdrs.String() + " " + contact.ID.String()+"\n\n")
+	fmt.Println("Listening on: " + listenAdrs.String() + " " + contact.ID.String() + "\n\n")
 	for {
 		msgbuf := make([]byte, 2048)
 		n, resp, err := servr.ReadFromUDP(msgbuf)
@@ -141,12 +137,6 @@ func (network *Network) Listen(contact Contact, port int) {
 		handledContact := network.msgHandle(msgbuf[:n], *Response)
 		fmt.Println("Msg from a friend: ", string(msgbuf[:n]))
 		fmt.Println("\nResponded with:  ", handledContact)
-
-		//kontrollerar CC
-		//closestContacts := network.Kad.Rtable.FindClosestContacts(contact.ID, 20)
-		///fmt.Println("Here are the recivers CCs")
-		//fmt.Println(closestContacts)
-
 	}
 }
 func (network *Network) SendPingMessage(contact *Contact) {
@@ -163,37 +153,30 @@ func (network *Network) SendPingMessage(contact *Contact) {
 	n, err := connection.Read(respmsg)
 	ErrorHandler(err)
 
-	if string(respmsg[:4]) == "PONG"{
+	if string(respmsg[:4]) == "PONG" {
 		fmt.Println("Adding the following PONGER to a Bucket...")
 		pongContact := HandlePongMsg(respmsg[5:n])
 		network.Kad.Rtable.AddContact(pongContact)
-		fmt.Println(pongContact.ID.String() +" "+ pongContact.Address)
-		//closestContacts := network.Kad.Rtable.FindClosestContacts(pongContact.ID, 3)
-		//fmt.Println("Here are the Senders CCs")
-		//fmt.Println(closestContacts)
+		fmt.Println(pongContact.ID.String() + " " + pongContact.Address)
 	}
-	//fmt.Println(string(respmsg[:n]))
-
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact) {
-	//me := network.Contact
-   	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
-   	connection, err := net.DialUDP("udp", nil, RemoteAddress)
-   	ErrorHandler(err)
-   	defer connection.Close()
-    msg := FindNodeMsg(contact)
-
-
-
-   	_, err = connection.Write(msg)
-   	ErrorHandler(err)
-   	fmt.Println("sent: " + string(msg))
-   	respmsg := make([]byte, 1024)
-   	n, err := connection.Read(respmsg)
+func (network *Network) SendFindContactMessage(contact *Contact, found chan []Contact) {
+	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
+	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)
-	fmt.Println("Got following contacts: \n")
-	fmt.Println(string(respmsg[:n]))
+	defer connection.Close()
+	msg := FindNodeMsg(contact)
+
+	_, err = connection.Write(msg)
+	ErrorHandler(err)
+	fmt.Println("sent: " + string(msg) + " to: " + contact.Address)
+	respmsg := make([]byte, 2048)
+	n, err := connection.Read(respmsg)
+	ErrorHandler(err)
+	c := ByteToContact(respmsg[:n])
+	found <- c
+
 }
 
 func (network *Network) SendFindDataMessage(hash string) {
@@ -202,4 +185,30 @@ func (network *Network) SendFindDataMessage(hash string) {
 
 func (network *Network) SendStoreMessage(data []byte) {
 	// TODO STORE
+}
+func (network *Network) IterativeFindNode() {
+	result := make(chan []Contact)
+	go network.Kad.LookupContact(*network, result, *network.Contact)
+	done := <-result
+	for _, c := range done {
+		network.Kad.Rtable.AddContact(c)
+	}
+	fmt.Printf("\nIterativeFindNode done, added %d contacts\n", len(done))
+}
+
+func ByteToContact(msg []byte) []Contact {
+	s := string(msg)
+	slice := strings.Split(s, "\n")
+	arr := make([]Contact, 20)
+	//var contact Contact
+	for i, line := range slice {
+		if len(line) != 0 {
+			contact := NewContact(NewKademliaID(line[:40]), line[41:41+strings.Index(line[41:], " ")])
+			if len(line[41+strings.Index(line[41:], " "):]) > 2 {
+				contact.distance = NewKademliaID(line[41+strings.Index(line[41:], " "):])
+			}
+			arr[i] = contact
+		}
+	}
+	return arr
 }
