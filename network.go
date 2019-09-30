@@ -137,12 +137,6 @@ func (network *Network) Listen(contact Contact, port int) {
 		handledContact := network.msgHandle(msgbuf[:n], *Response)
 		fmt.Println("Msg from a friend: ", string(msgbuf[:n]))
 		fmt.Println("\nResponded with:  ", handledContact)
-
-		//kontrollerar CC
-		//closestContacts := network.Kad.Rtable.FindClosestContacts(contact.ID, 20)
-		///fmt.Println("Here are the recivers CCs")
-		//fmt.Println(closestContacts)
-
 	}
 }
 func (network *Network) SendPingMessage(contact *Contact) {
@@ -164,16 +158,10 @@ func (network *Network) SendPingMessage(contact *Contact) {
 		pongContact := HandlePongMsg(respmsg[5:n])
 		network.Kad.Rtable.AddContact(pongContact)
 		fmt.Println(pongContact.ID.String() + " " + pongContact.Address)
-		//closestContacts := network.Kad.Rtable.FindClosestContacts(pongContact.ID, 3)
-		//fmt.Println("Here are the Senders CCs")
-		//fmt.Println(closestContacts)
 	}
-	//fmt.Println(string(respmsg[:n]))
-
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact, found chan []Contact) {
-	//me := network.Contact
 	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)

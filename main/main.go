@@ -49,9 +49,9 @@ func main() {
 			newNode.SendPingMessage(&bContact)
 
 			//Check if my bucket was updated
-			findBootstrap := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
-			if len(findBootstrap) == 0 {
-				ErrorHandler(errors.New("Pinging bootstrap failed or buckets weren't updated!"))
+			myContacts := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
+			if len(myContacts) == 0 {
+				ErrorHandler(errors.New("pinging bootstrap failed or buckets weren't updated!"))
 			}
 
 			//iterativeFindNode for new node n
