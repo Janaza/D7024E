@@ -31,7 +31,8 @@ func main() {
 		myip = "127.0.0.1"
 	}
 	me := d.NewContact(d.NewRandomKademliaID(), myip+":"+myport)
-	fmt.Println("I am: ", me.ID, me.Address)
+	fmt.Println("I am: ", me.ID, me.Address+"\n")
+
 	newNode := d.InitNode(myip, iPort, &me)
 	//Read ip & node from args (node to join)
 	bIP := ""
@@ -54,8 +55,6 @@ func main() {
 			}
 
 			//iterativeFindNode for new node n
-			fmt.Println(newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160))
-
 			newNode.IterativeFindNode()
 
 			//Update the k-buckets further away than the one bootstrap node falls in
