@@ -182,12 +182,10 @@ func (network *Network) SendFindContactMessage(contact *Contact, found chan []Co
 
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
-	fmt.Println("sent: " + string(msg))
+	fmt.Println("sent: " + string(msg) + " to: " + contact.Address)
 	respmsg := make([]byte, 2048)
 	n, err := connection.Read(respmsg)
 	ErrorHandler(err)
-	fmt.Println("Got following contacts: ")
-	fmt.Println(string(respmsg[:n]))
 	c := ByteToContact(respmsg[:n])
 	found <- c
 
@@ -213,15 +211,15 @@ func (network *Network) IterativeFindNode() {
 func ByteToContact(msg []byte) []Contact {
 	s := string(msg)
 	slice := strings.Split(s, "\n")
-	arr := make([]Contact, 0)
+	arr := make([]Contact, 20)
 	//var contact Contact
-	for _, line := range slice {
+	for i, line := range slice {
 		if len(line) != 0 {
 			contact := NewContact(NewKademliaID(line[:40]), line[41:41+strings.Index(line[41:], " ")])
 			if len(line[41+strings.Index(line[41:], " "):]) > 2 {
 				contact.distance = NewKademliaID(line[41+strings.Index(line[41:], " "):])
 			}
-			arr = append(arr, contact)
+			arr[i] = contact
 		}
 	}
 	return arr

@@ -1,6 +1,8 @@
 package D7024E
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Kademlia struct {
 	Rtable *RoutingTable
@@ -13,12 +15,12 @@ func InitKad(me Contact) *Kademlia {
 	return node
 }
 
-func (kademlia *Kademlia) LookupContact(net Network, result chan []Contact, target Contact) {
+func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, target Contact) {
 	alpha := 3
 	found := make(chan []Contact)
 	var closestNode Contact
 	var x []Contact
-	myClosest := net.Kad.Rtable.FindClosestContacts(target.ID, alpha)
+	myClosest := network.Kad.Rtable.FindClosestContacts(target.ID, alpha)
 	closestNode = myClosest[0]
 	shortlist := ContactCandidates{}
 	doublet := make(map[Contact]bool)
@@ -26,15 +28,16 @@ func (kademlia *Kademlia) LookupContact(net Network, result chan []Contact, targ
 		shortlist.contacts = append(shortlist.contacts, mine)
 		doublet[mine] = true
 	}
+
 	runningRoutines := 0
 	for runningRoutines < 3 && len(shortlist.contacts) > 1 {
-		go net.SendFindContactMessage(&shortlist.contacts[runningRoutines], found)
+		go network.SendFindContactMessage(&shortlist.contacts[runningRoutines], found)
 		x = <-found
 		runningRoutines++
 	}
 	if len(shortlist.contacts) == 1 {
 		runningRoutines++
-		go net.SendFindContactMessage(&shortlist.contacts[0], found)
+		go network.SendFindContactMessage(&shortlist.contacts[0], found)
 		x = <-found
 
 	}
@@ -42,9 +45,8 @@ func (kademlia *Kademlia) LookupContact(net Network, result chan []Contact, targ
 	for runningRoutines > 0 {
 		recived := x
 		fmt.Printf("\nrunningRoutines: %d\n", runningRoutines)
-		fmt.Println("Closest node: " + closestNode.String())
 		for _, candidate := range recived {
-			if doublet[candidate] != true && !(candidate.ID == net.Contact.ID) {
+			if doublet[candidate] != true && !(candidate.Address == network.Contact.Address) && !(candidate.ID == nil) {
 				doublet[candidate] = true
 				shortlist.contacts = append(shortlist.contacts, candidate)
 			}
@@ -59,10 +61,8 @@ func (kademlia *Kademlia) LookupContact(net Network, result chan []Contact, targ
 					break
 				}
 				runningRoutines++
-				fmt.Println("Starting routine at line 63")
-				go net.SendFindContactMessage(&shortlist.contacts[i], found)
+				go network.SendFindContactMessage(&shortlist.contacts[i], found)
 				x = <-found
-				fmt.Println("exited at line 66")
 
 			}
 		}

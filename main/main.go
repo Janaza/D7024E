@@ -55,9 +55,8 @@ func main() {
 
 			//iterativeFindNode for new node n
 			fmt.Println(newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160))
-			if iPort == 40 {
-				newNode.IterativeFindNode()
-			}
+
+			newNode.IterativeFindNode()
 
 			//Update the k-buckets further away than the one bootstrap node falls in
 			/*
@@ -70,6 +69,7 @@ func main() {
 		}
 
 	}
+	out := make(chan []d.Contact)
 	wg.Add(2)
 	go newNode.Listen(me, iPort) //Handle any RPC
 	go func() {                  //Handle cli at the same time as RCP
@@ -86,7 +86,10 @@ func main() {
 				}
 				if text[:4] == "FIND" {
 					node := d.NewContact(d.NewKademliaID(text[5:]), text[46:])
-					newNode.SendFindContactMessage(&node, make(chan []d.Contact))
+					go newNode.SendFindContactMessage(&node, out)
+					x := <-out
+					fmt.Println("Got following contacts: ")
+					fmt.Println(x)
 				}
 			}
 		}
