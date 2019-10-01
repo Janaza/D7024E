@@ -3,12 +3,12 @@ package D7024E
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
 )
 
 type Kademlia struct {
 	Rtable *RoutingTable
 	data []dataStruct
+	net	Network
 }
 type dataStruct struct {
 	Hash	string
@@ -33,16 +33,9 @@ func (kademlia *Kademlia) LookupData(hash string) {
 }
 
 func (kademlia *Kademlia) Store(data []byte) {
-	hashedData := HashData(data)
-	for _, dataFile := range kademlia.data{
-		if dataFile.Hash == hashedData{
-			fmt.Println("File already stored")
-			return
-		} else{
-			fmt.Println("Storing " + string(data) + " with hash "+ hashedData)
-			dataFile := dataStruct{hashedData, data, }
-			kademlia.data = append(kademlia.data, dataFile)
-		}
+	storeContacts := kademlia.iterativeFindNode()
+	for i := 0; i < len(storeContacts) && i < 20; i++ {
+		kademlia.net.SendStoreMessage(storeContacts[i].contact, data)
 	}
 }
 

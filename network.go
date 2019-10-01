@@ -49,6 +49,25 @@ func FindNodeMsg(contact *Contact) []byte {
 	return msg
 }
 
+func StoreMsg(contact *Contact, data []byte) []byte{
+	msg := []byte("store " + contact.ID.String() + " " + string(data))
+	return msg
+}
+
+func (network *Network) HandleStoreMsg(msg []byte, resp response){
+	hashedData := HashData(msg[6:46])
+	for _, dataFile := range network.Kad.data {
+		if dataFile.Hash == hashedData {
+			fmt.Println("File already stored")
+
+		} else {
+			fmt.Println("Storing " + string(msg[6:46]) + " with hash " + hashedData)
+			dataFile := dataStruct{hashedData, msg[6:46]}
+			network.Kad.data = append(network.Kad.data, dataFile)
+		}
+	}
+
+}
 //handles incoming ping msgs
 func (network *Network) HandlePingMsg(msg []byte, resp response) []Contact {
 	fmt.Println(string(msg))
@@ -106,13 +125,14 @@ func ipToString(array []byte) string {
 
 func (network *Network) msgHandle(msg []byte, resp response) []Contact {
 	var returnContact []Contact
-
 	switch {
 	case string(msg[:4]) == "ping":
 		returnContact = network.HandlePingMsg(msg[5:], resp)
 		network.Kad.Rtable.AddContact(returnContact[0])
 	case string(msg[:9]) == "FIND_NODE":
 		returnContact = network.HandleFindNodeMsg(msg[10:], resp)
+	case string(msg[:5]) == "store":
+		network.HandleStoreMsg(msg[5:], resp)
 	default:
 		returnContact = append(returnContact, NewContact(nil, ""))
 	}
@@ -196,16 +216,14 @@ func (network *Network) SendFindDataMessage(hash string) {
 	// TODO FIND_VALUE
 }
 
-func (network *Network) SendStoreMessage(data []byte, hash string, contact *Contact) {
+func (network *Network) SendStoreMessage(contact *Contact, data []byte) {
 	me := network.Contact
 	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)
 	defer connection.Close()
-	msg := StoreMsg(me)
+	msg := StoreMsg(me, data)
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
 }
-func (network *Network) StoreMsg(data []byte){
 
-}
