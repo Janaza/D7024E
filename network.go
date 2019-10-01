@@ -184,16 +184,15 @@ func (network *Network) SendFindDataMessage(hash string) {
 }
 
 func (network *Network) SendStoreMessage(data []byte) {
+
 	// TODO STORE
 }
-func (network *Network) IterativeFindNode() {
+func (network *Network) IterativeFindNode() []Contact {
 	result := make(chan []Contact)
 	go network.Kad.LookupContact(*network, result, *network.Contact)
 	done := <-result
-	for _, c := range done {
-		network.Kad.Rtable.AddContact(c)
-	}
-	fmt.Printf("\nIterativeFindNode done, added %d contacts\n", len(done))
+	fmt.Printf("\nIterativeFindNode done, found %d contacts\n", len(done))
+	return done
 }
 
 func ByteToContact(msg []byte) []Contact {
