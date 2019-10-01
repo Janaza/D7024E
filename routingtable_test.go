@@ -20,6 +20,19 @@ func TestRoutingTable(t *testing.T) {
 		fmt.Println(contacts[i].String())
 	}
 }
+
+func TestNetwork_HandleStoreMsg(t *testing.T) {
+
+}
+func TestStoreMsg(t *testing.T) {
+	storeVal := []byte("h")
+	svar := HashData(storeVal)
+	fmt.Println(svar)
+	contact := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
+	testMsg := StoreMsg(&contact, storeVal)
+	fmt.Println(string(testMsg))
+
+}
 func TestPingMsg(t *testing.T) {
 	contact := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
 	testMsg := PingMsg(&contact)
@@ -30,4 +43,11 @@ func TestPingMsg(t *testing.T) {
 		fmt.Println("Error in PingMsg")
 	}
 
+}
+
+
+func TestHashFunc(t *testing.T){
+	hej := []byte("h")
+	svar := HashData(hej)
+	fmt.Println(svar)
 }

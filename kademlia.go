@@ -1,6 +1,8 @@
 package D7024E
 
 import (
+	"fmt"
+	"math/rand"
 	"crypto/sha1"
 	"encoding/hex"
 	"math/rand"
@@ -8,7 +10,9 @@ import (
 
 type Kademlia struct {
 	Rtable *RoutingTable
-	data   []dataStruct
+	data []dataStruct
+	net	Network
+	hashmap map[string][]byte
 }
 type dataStruct struct {
 	Hash  string
@@ -18,6 +22,7 @@ type dataStruct struct {
 func InitKad(me Contact) *Kademlia {
 	node := &Kademlia{
 		Rtable: NewRoutingTable(me),
+		hashmap: make(map[string][]byte),
 	}
 	return node
 }
@@ -94,16 +99,20 @@ func (kademlia *Kademlia) LookupData(hash string) {
 
 }
 
-func (kademlia *Kademlia) Store(data []byte) {
-	storeContacts := make([]Contact)
-	for i := 0; i < len(storeContacts) && i < 20; i++ {
-		kademlia.net.SendStoreMessage(storeContacts[i].contact, data)
+func (kademlia *Kademlia) Store(data []byte, network *Network) {
+	ch := make(chan []Contact)
+	contact := NewContact(NewKademliaID(HashData(data)), "")
+	fmt.Println(contact.ID)
+	go kademlia.LookupContact(*network, ch, contact)
+	done :=  <- ch
+	for _, c := range done{
+		kademlia.net.SendStoreMessage(&c, data)
 	}
 }
 
 func HashData(data []byte) string {
 	hashedData := sha1.Sum(data)
-	hashedStringdata := hex.EncodeToString(hashedData[0:20])
+	hashedStringdata := hex.EncodeToString(hashedData[0:])
 	return hashedStringdata
 }
 

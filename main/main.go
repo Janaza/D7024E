@@ -1,5 +1,5 @@
 package main
-
+//powershell.exe -executionpolicy bypass .\run.ps1
 import (
 	d "D7024E"
 	"bufio"
@@ -103,7 +103,9 @@ func main() {
 				if text[:3] == "PUT"{
 					storeData := []byte(text[4:])
 					fmt.Println("Storing data on other nodes")
-					newNode.Kad.Store(storeData)
+						newNode.IterativeStore(storeData)
+
+
 
 				}
 				if text[:3] == "GET"{
