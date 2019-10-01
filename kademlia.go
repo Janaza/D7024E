@@ -1,21 +1,19 @@
 package D7024E
 
 import (
-
-	"fmt"
-	"math/rand"
 	"crypto/sha1"
 	"encoding/hex"
+	"math/rand"
 )
 
 type Kademlia struct {
 	Rtable *RoutingTable
-	data []dataStruct
 	net	Network
+	data   []dataStruct
 }
 type dataStruct struct {
-	Hash	string
-	Value	[]byte
+	Hash  string
+	Value []byte
 }
 
 func InitKad(me Contact) *Kademlia {
@@ -33,10 +31,10 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 	myClosest := network.Kad.Rtable.FindClosestContacts(target.ID, alpha)
 	closestNode = myClosest[0]
 	var shortlist []Contact
-	doublet := make(map[Contact]bool)
+	doublet := make(map[string]bool)
 	for _, mine := range myClosest {
 		shortlist = append(shortlist, mine)
-		doublet[mine] = true
+		doublet[mine.ID.String()] = true
 	}
 
 	runningRoutines := 0
@@ -54,18 +52,19 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 
 	for runningRoutines > 0 {
 		recived := x
-		fmt.Printf("\nrunningRoutines: %d\n", runningRoutines)
 		for _, candidate := range recived {
-			if doublet[candidate] != true && !(candidate.Address == network.Contact.Address) && !(candidate.ID == nil) {
-				doublet[candidate] = true
-				candidate.CalcDistance(network.Contact.ID)
-				shortlist = append(shortlist, candidate)
+			if !(candidate.Address == network.Contact.Address) && !(candidate.ID == nil) {
+				if doublet[candidate.ID.String()] == false {
+					doublet[candidate.ID.String()] = true
+					candidate.CalcDistance(network.Contact.ID)
+					shortlist = append(shortlist, candidate)
+				}
 			}
 		}
-		shortlist = qsort(shortlist)
+		shortlist = qsort(shortlist, target)
 		runningRoutines--
-		if closestNode != shortlist[0] {
-			closestNode = shortlist[0]
+		if closestNode.ID.String() != shortlist[0].ID.String() {
+			closestNode.ID = shortlist[0].ID
 			for i := range shortlist {
 				if i >= 3 {
 					break
@@ -77,7 +76,13 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 			}
 		}
 	}
-	shortlist = qsort(shortlist)
+	shortlist = qsort(shortlist, target)
+	/* //Shows that list is sorted
+	for _, c := range shortlist {
+		dist := c.ID.CalcDistance(target.ID)
+		fmt.Println(dist.String())
+	}
+	*/
 	if len(shortlist) > 20 {
 		result <- shortlist[:20]
 	} else {
@@ -97,35 +102,36 @@ func (kademlia *Kademlia) Store(data []byte) {
 	}
 }
 
-func HashData(data []byte) string{
+func HashData(data []byte) string {
 	hashedData := sha1.Sum(data)
 	hashedStringdata := hex.EncodeToString(hashedData[0:20])
 	return hashedStringdata
 }
 
-func qsort(contact []Contact) []Contact {
+func qsort(contact []Contact, target Contact) []Contact {
 	if len(contact) < 2 {
-        return contact
-    }
-      
-    left, right := 0, len(contact)-1
-      
-    pivot := rand.Int() % len(contact)
-      
-    contact[pivot], contact[right] = contact[right], contact[pivot]
-      
-    for i := range contact {
-        if (contact[i].distance.Less(contact[right].distance)) {
-            contact[left], contact[i] = contact[i], contact[left]
-            left++
-        }
-    }
-      
-    contact[left], contact[right] = contact[right], contact[left]
-      
-    qsort(contact[:left])
-    qsort(contact[left+1:])
-      
-    return contact
-}
+		return contact
+	}
 
+	left, right := 0, len(contact)-1
+
+	pivot := rand.Int() % len(contact)
+
+	contact[pivot], contact[right] = contact[right], contact[pivot]
+
+	for i := range contact {
+		dist := contact[i].ID.CalcDistance(target.ID)
+		distr := contact[right].ID.CalcDistance(target.ID)
+		if dist.Less(distr) {
+			contact[left], contact[i] = contact[i], contact[left]
+			left++
+		}
+	}
+
+	contact[left], contact[right] = contact[right], contact[left]
+
+	qsort(contact[:left], target)
+	qsort(contact[left+1:], target)
+
+	return contact
+}
