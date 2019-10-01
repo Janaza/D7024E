@@ -8,7 +8,6 @@ import (
 
 type Kademlia struct {
 	Rtable *RoutingTable
-	net	Network
 	data   []dataStruct
 }
 type dataStruct struct {
@@ -96,7 +95,7 @@ func (kademlia *Kademlia) LookupData(hash string) {
 }
 
 func (kademlia *Kademlia) Store(data []byte) {
-	storeContacts := kademlia.iterativeFindNode()
+	storeContacts := make([]Contact)
 	for i := 0; i < len(storeContacts) && i < 20; i++ {
 		kademlia.net.SendStoreMessage(storeContacts[i].contact, data)
 	}
