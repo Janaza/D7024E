@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 var wg sync.WaitGroup
@@ -94,6 +95,27 @@ func main() {
 					fmt.Println("Got following contacts: ")
 					fmt.Println(x)
 				}
+				/*Placeholder
+				PUT
+				GET
+				EXIT
+				 */
+				if text[:3] == "PUT"{
+					storeData := []byte(text[4:])
+					fmt.Println("Storing data on other nodes")
+					newNode.Kad.Store(storeData)
+
+				}
+				if text[:3] == "GET"{
+					fmt.Println("Fetching data...")
+					newNode.SendFindDataMessage("")
+				}
+				if text[:4] == "EXIT" {
+					fmt.Println("Node is shutting down in 3 seconds...")
+					time.Sleep(3 * time.Second)
+					os.Exit(0)
+				}
+
 			}
 		}
 	}()
