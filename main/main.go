@@ -3,6 +3,7 @@ package main
 import (
 	d "D7024E"
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -31,7 +32,8 @@ func main() {
 		myip = "127.0.0.1"
 	}
 	me := d.NewContact(d.NewRandomKademliaID(), myip+":"+myport)
-	fmt.Println("I am: ", me.ID, me.Address + "\n")
+	fmt.Println("I am: ", me.ID, me.Address+"\n")
+
 	newNode := d.InitNode(myip, iPort, &me)
 	//Read ip & node from args (node to join)
 	bIP := ""
@@ -47,12 +49,31 @@ func main() {
 			//RPC PING node c and update buckets
 			newNode.SendPingMessage(&bContact)
 
+			//Check if my bucket was updated
+			myContacts := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
+			if len(myContacts) == 0 {
+				ErrorHandler(errors.New("pinging bootstrap failed or buckets weren't updated"))
+			}
 
 			//iterativeFindNode for new node n
-			newNode.Kad.LookupContact(&me)
+			val := newNode.IterativeFindNode()
+			for _, c := range val {
+				newNode.Kad.Rtable.AddContact(c)
+			}
+
+
+			//Update the k-buckets further away than the one bootstrap node falls in
+			/*
+				for i := 160; i > newNode.Kad.Rtable.GetBucketIndex(findBootstrap[0].ID); i-- {
+					for k := 20; k < 20; k++ {
+						newNode.SendPingMessage(&findBootstrap[i])
+
+					}
+				}*/
 		}
 
 	}
+	out := make(chan []d.Contact)
 	wg.Add(2)
 	go newNode.Listen(me, iPort) //Handle any RPC
 	go func() {                  //Handle cli at the same time as RCP
@@ -68,8 +89,11 @@ func main() {
 					newNode.SendPingMessage(&node)
 				}
 				if text[:4] == "FIND" {
-				    node := d.NewContact(d.NewKademliaID(text[5:]), text[46:])
-                    newNode.SendFindContactMessage(&node)
+					node := d.NewContact(d.NewKademliaID(text[5:]), text[46:])
+					go newNode.SendFindContactMessage(&node, out)
+					x := <-out
+					fmt.Println("Got following contacts: ")
+					fmt.Println(x)
 				}
 				/*Placeholder
 				PUT
@@ -98,6 +122,7 @@ func main() {
 	wg.Wait()
 
 }
+//ErrorHandler to not fill code with if statements
 func ErrorHandler(err error) {
 	if err != nil {
 		log.Fatal(err)

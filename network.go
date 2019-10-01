@@ -94,10 +94,8 @@ func (network *Network) HandleFindNodeMsg(msg []byte, resp response) []Contact {
 	closeContactsByte := make([]byte, 0)
 
 	for i := 0; i < len(closeContactsArr); i++ {
-		//Contacts for reciver
-		closeCToByte = []byte(closeContactsArr[i].ID.String() + " " + closeContactsArr[i].Address + "\n") //seperate contacts by newline
+		closeCToByte = []byte(closeContactsArr[i].ID.String() + " " + closeContactsArr[i].Address + " " + closeContactsArr[i].distance.String() + "\n")
 		closeContactsByte = append(closeContactsByte, closeCToByte[:]...)
-		//This fills terminal so i removed it...
 	}
 
 	returnMsg := make([]Contact, 1)
@@ -159,12 +157,6 @@ func (network *Network) Listen(contact Contact, port int) {
 		handledContact := network.msgHandle(msgbuf[:n], *Response)
 		fmt.Println("Msg from a friend: ", string(msgbuf[:n]))
 		fmt.Println("\nResponded with:  ", handledContact)
-
-		//kontrollerar CC
-		//closestContacts := network.Kad.Rtable.FindClosestContacts(contact.ID, 20)
-		///fmt.Println("Here are the recivers CCs")
-		//fmt.Println(closestContacts)
-
 	}
 }
 func (network *Network) SendPingMessage(contact *Contact) {
@@ -186,16 +178,10 @@ func (network *Network) SendPingMessage(contact *Contact) {
 		pongContact := HandlePongMsg(respmsg[5:n])
 		network.Kad.Rtable.AddContact(pongContact)
 		fmt.Println(pongContact.ID.String() + " " + pongContact.Address)
-		//closestContacts := network.Kad.Rtable.FindClosestContacts(pongContact.ID, 3)
-		//fmt.Println("Here are the Senders CCs")
-		//fmt.Println(closestContacts)
 	}
-	//fmt.Println(string(respmsg[:n]))
-
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact) {
-	//me := network.Contact
+func (network *Network) SendFindContactMessage(contact *Contact, found chan []Contact) {
 	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)
@@ -204,16 +190,42 @@ func (network *Network) SendFindContactMessage(contact *Contact) {
 
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
-	fmt.Println("sent: " + string(msg))
+	fmt.Println("sent: " + string(msg) + " to: " + contact.Address)
 	respmsg := make([]byte, 2048)
 	n, err := connection.Read(respmsg)
 	ErrorHandler(err)
-	fmt.Println("Got following contacts: ")
-	fmt.Println(string(respmsg[:n]))
+	c := ByteToContact(respmsg[:n])
+	found <- c
+
 }
 
 func (network *Network) SendFindDataMessage(hash string) {
 	// TODO FIND_VALUE
+}
+
+func (network *Network) IterativeFindNode() []Contact {
+	result := make(chan []Contact)
+	go network.Kad.LookupContact(*network, result, *network.Contact)
+	done := <-result
+	fmt.Printf("\nIterativeFindNode done, found %d contacts\n", len(done))
+	return done
+}
+
+func ByteToContact(msg []byte) []Contact {
+	s := string(msg)
+	slice := strings.Split(s, "\n")
+	arr := make([]Contact, 20)
+	//var contact Contact
+	for i, line := range slice {
+		if len(line) != 0 {
+			contact := NewContact(NewKademliaID(line[:40]), line[41:41+strings.Index(line[41:], " ")])
+			if len(line[41+strings.Index(line[41:], " "):]) > 2 {
+				contact.distance = NewKademliaID(line[41+strings.Index(line[41:], " "):])
+			}
+			arr[i] = contact
+		}
+	}
+	return arr
 }
 
 func (network *Network) SendStoreMessage(contact *Contact, data []byte) {
@@ -226,4 +238,5 @@ func (network *Network) SendStoreMessage(contact *Contact, data []byte) {
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
 }
+
 
