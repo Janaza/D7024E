@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"crypto/sha1"
 	"encoding/hex"
-	"math/rand"
 )
 
 type Kademlia struct {
