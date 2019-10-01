@@ -3,10 +3,9 @@ package D7024E
 import (
 
 	"fmt"
-
+	"math/rand"
 	"crypto/sha1"
 	"encoding/hex"
-
 )
 
 type Kademlia struct {
@@ -33,22 +32,22 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 	var x []Contact
 	myClosest := network.Kad.Rtable.FindClosestContacts(target.ID, alpha)
 	closestNode = myClosest[0]
-	shortlist := ContactCandidates{}
+	var shortlist []Contact
 	doublet := make(map[Contact]bool)
 	for _, mine := range myClosest {
-		shortlist.contacts = append(shortlist.contacts, mine)
+		shortlist = append(shortlist, mine)
 		doublet[mine] = true
 	}
 
 	runningRoutines := 0
-	for runningRoutines < 3 && len(shortlist.contacts) > 1 {
-		go network.SendFindContactMessage(&shortlist.contacts[runningRoutines], found)
+	for runningRoutines < 3 && len(shortlist) > 1 {
+		go network.SendFindContactMessage(&shortlist[runningRoutines], found)
 		x = <-found
 		runningRoutines++
 	}
-	if len(shortlist.contacts) == 1 {
+	if len(shortlist) == 1 {
 		runningRoutines++
-		go network.SendFindContactMessage(&shortlist.contacts[0], found)
+		go network.SendFindContactMessage(&shortlist[0], found)
 		x = <-found
 
 	}
@@ -59,30 +58,30 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 		for _, candidate := range recived {
 			if doublet[candidate] != true && !(candidate.Address == network.Contact.Address) && !(candidate.ID == nil) {
 				doublet[candidate] = true
-				shortlist.contacts = append(shortlist.contacts, candidate)
+				candidate.CalcDistance(network.Contact.ID)
+				shortlist = append(shortlist, candidate)
 			}
 		}
-
-		shortlist.Sort()
+		shortlist = qsort(shortlist)
 		runningRoutines--
-		if closestNode != shortlist.contacts[0] {
-			closestNode = shortlist.contacts[0]
-			for i := range shortlist.contacts {
+		if closestNode != shortlist[0] {
+			closestNode = shortlist[0]
+			for i := range shortlist {
 				if i >= 3 {
 					break
 				}
 				runningRoutines++
-				go network.SendFindContactMessage(&shortlist.contacts[i], found)
+				go network.SendFindContactMessage(&shortlist[i], found)
 				x = <-found
 
 			}
 		}
 	}
-	shortlist.Sort()
-	if len(shortlist.contacts) > 20 {
-		result <- shortlist.contacts[:20]
+	shortlist = qsort(shortlist)
+	if len(shortlist) > 20 {
+		result <- shortlist[:20]
 	} else {
-		result <- shortlist.contacts
+		result <- shortlist
 	}
 }
 
@@ -103,3 +102,30 @@ func HashData(data []byte) string{
 	hashedStringdata := hex.EncodeToString(hashedData[0:20])
 	return hashedStringdata
 }
+
+func qsort(contact []Contact) []Contact {
+	if len(contact) < 2 {
+        return contact
+    }
+      
+    left, right := 0, len(contact)-1
+      
+    pivot := rand.Int() % len(contact)
+      
+    contact[pivot], contact[right] = contact[right], contact[pivot]
+      
+    for i := range contact {
+        if (contact[i].distance.Less(contact[right].distance)) {
+            contact[left], contact[i] = contact[i], contact[left]
+            left++
+        }
+    }
+      
+    contact[left], contact[right] = contact[right], contact[left]
+      
+    qsort(contact[:left])
+    qsort(contact[left+1:])
+      
+    return contact
+}
+
