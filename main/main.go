@@ -104,13 +104,11 @@ func main() {
 					storeData := []byte(text[4:])
 					fmt.Println("Storing data on other nodes")
 						newNode.IterativeStore(storeData)
-
-
-
 				}
 				if text[:3] == "GET"{
+					hashData := string(text[4:])
 					fmt.Println("Fetching data...")
-					newNode.SendFindDataMessage("")
+					newNode.IterativeFindData(hashData)
 				}
 				if text[:4] == "EXIT" {
 					fmt.Println("Node is shutting down in 3 seconds...")

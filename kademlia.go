@@ -5,8 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
-	"crypto/sha1"
-	"encoding/hex"
 )
 
 type Kademlia struct {
@@ -95,8 +93,15 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 	}
 }
 
-func (kademlia *Kademlia) LookupData(hash string) {
-	// TODO iterativeFindValue
+func (kademlia *Kademlia) LookupData(hash string, network *Network) {
+	ch := make(chan []Contact)
+	contact := NewContact(NewKademliaID(hash), "")
+	fmt.Println(contact.ID)
+	go kademlia.LookupContact(*network, ch, contact)
+	done :=  <- ch
+	for _, c := range done{
+		kademlia.net.SendFindDataMessage(hash, &c)
+	}
 
 }
 
@@ -143,10 +148,4 @@ func qsort(contact []Contact, target Contact) []Contact {
 	qsort(contact[left+1:], target)
 
 	return contact
-}
-
-func (kademlia *Kademlia) HashData(data []byte) string{
-	hashedData := sha1.Sum(data)
-	hashedStringdata := hex.EncodeToString(hashedData[0:20])
-	return hashedStringdata
 }
