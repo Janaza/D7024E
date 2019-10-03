@@ -6,6 +6,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	//"net/http"
 )
 
 type Network struct {
@@ -38,6 +39,8 @@ func ErrorHandler(err error) {
 	}
 }
 
+
+
 //creates the content of ping
 func PingMsg(contact *Contact) []byte {
 	msg := []byte("ping " + contact.ID.String() + " " + contact.Address)
@@ -49,6 +52,59 @@ func FindNodeMsg(contact *Contact) []byte {
 	return msg
 }
 
+func StoreMsg(data []byte) []byte{
+	msg := []byte("store "  + string(data))
+	return msg
+}
+
+func (network *Network) HandleStoreMsg(msg []byte, resp response)[]Contact{
+	hashedData := HashData(msg[:])
+	fmt.Println(hashedData)
+
+	if _, ok := network.Kad.hashmap[hashedData]; !ok{
+		network.Kad.hashmap[hashedData] = msg[:]
+		reply := []byte("File succesfully stored " + hashedData)
+		_, err := resp.servr.WriteToUDP(reply, resp.resp)
+		ErrorHandler(err)
+	} else{
+		reply := []byte(string(msg[:]) +" "+("File already stored"))
+		_, err := resp.servr.WriteToUDP(reply, resp.resp)
+		ErrorHandler(err)
+
+	}
+	/*for _, dataFile := range network.Kad.data {
+		if dataFile.Hash == hashedData {
+			fmt.Println("File already stored")
+			reply := []byte("File already stored " + network.Contact.ID.String() + " " + network.Contact.Address)
+			_, err := resp.servr.WriteToUDP(reply, resp.resp)
+			ErrorHandler(err)
+
+		} else {
+			fmt.Println("Storing " + string(msg[42:]) + " with hash " + hashedData)
+			dataFile := dataStruct{hashedData, msg[42:]}
+			network.Kad.data = append(network.Kad.data, dataFile)
+			reply := []byte("File succesfully stored " + network.Contact.ID.String() + " " + network.Contact.Address)
+			_, err := resp.servr.WriteToUDP(reply, resp.resp)
+			ErrorHandler(err)
+		}
+	}
+	if len(network.Kad.data) == 0{
+		fmt.Println("Storing " + string(msg[42:]) + " with hash " + hashedData)
+		dataFile := dataStruct{hashedData, msg[42:]}
+		network.Kad.data = append(network.Kad.data, dataFile)
+		reply := []byte("File succesfully stored " + network.Contact.ID.String() + " " + network.Contact.Address)
+		_, err := resp.servr.WriteToUDP(reply, resp.resp)
+		ErrorHandler(err)
+	}*/
+	contact := NewContact(network.Contact.ID, network.Contact.Address)
+
+	reply := []byte("Store answer " + network.Contact.ID.String() + " " + network.Contact.Address)
+	_, err := resp.servr.WriteToUDP(reply, resp.resp)
+	ErrorHandler(err)
+	contactArr := make([]Contact, 1)
+	contactArr[0] = contact
+	return contactArr
+}
 //handles incoming ping msgs
 func (network *Network) HandlePingMsg(msg []byte, resp response) []Contact {
 	fmt.Println(string(msg))
@@ -104,15 +160,17 @@ func ipToString(array []byte) string {
 
 func (network *Network) msgHandle(msg []byte, resp response) []Contact {
 	var returnContact []Contact
-
 	switch {
 	case string(msg[:4]) == "ping":
 		returnContact = network.HandlePingMsg(msg[5:], resp)
 		network.Kad.Rtable.AddContact(returnContact[0])
 	case string(msg[:9]) == "FIND_NODE":
 		returnContact = network.HandleFindNodeMsg(msg[10:], resp)
+	case string(msg[:5]) == "store":
+		returnContact = network.HandleStoreMsg(msg[5:], resp)
 	//case string(msg[:10]) == "FIND_VALUE":
 		//returnContact = network.HandleFindDataMsg(msg[11:], resp)
+
 	default:
 		returnContact = append(returnContact, NewContact(nil, ""))
 	}
@@ -139,6 +197,7 @@ func (network *Network) Listen(contact Contact, port int) {
 		handledContact := network.msgHandle(msgbuf[:n], *Response)
 		fmt.Println("Msg from a friend: ", string(msgbuf[:n]))
 		fmt.Println("\nResponded with:  ", handledContact)
+		fmt.Println(network.Kad.hashmap)
 	}
 }
 func (network *Network) SendPingMessage(contact *Contact) {
@@ -217,7 +276,6 @@ func FindDataMsg(contact *Contact) []byte {
 }
 
 
-
 func (network *Network) HandleFindDataMsg(msg []byte, resp response) []Contact{
 
 	hashedData := network.Kad.HashData(msg)
@@ -254,10 +312,12 @@ func (network *Network) IterativeFindNode() {
 	result := make(chan []Contact)
 	go network.Kad.LookupContact(*network, result, *network.Contact)
 	done := <-result
-	for _, c := range done {
-		network.Kad.Rtable.AddContact(c)
-	}
-	fmt.Printf("\nIterativeFindNode done, added %d contacts\n", len(done))
+	fmt.Printf("\nIterativeFindNode done, found %d contacts\n", len(done))
+	return done
+}
+
+func (network *Network) IterativeStore(data []byte){
+	network.Kad.Store(data, network)
 }
 
 func ByteToContact(msg []byte) []Contact {
@@ -276,3 +336,20 @@ func ByteToContact(msg []byte) []Contact {
 	}
 	return arr
 }
+
+func (network *Network) SendStoreMessage(contact *Contact, data []byte) {
+	//me := network.Contact
+	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
+	connection, err := net.DialUDP("udp", nil, RemoteAddress)
+	ErrorHandler(err)
+	defer connection.Close()
+	msg := StoreMsg(data)
+	_, err = connection.Write(msg)
+	ErrorHandler(err)
+	respmsg := make([]byte, 1024)
+	n, err := connection.Read(respmsg)
+	ErrorHandler(err)
+	fmt.Println(string(respmsg[:n]))
+}
+
+

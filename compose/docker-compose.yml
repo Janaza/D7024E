@@ -1,7 +1,28 @@
+# See https://docs.docker.com/compose/compose-file/ for information about what
+# commands you can use in this file.
+#
+# Note that you must use the `docker stack deploy` command, with any required
+# command line flags, in order to actually get any replicas started. That
+# command requires that a docker swarm is already running in order to function.
+
 version: "3"
 services:
+  bootstrap:
+    image: kadlab:latest
+    stdin_open: true
+    tty: true
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - ../:/code
+      - ./init/bootstrap/:/init
+    networks:
+      kademlia_network:
+        ipv4_address: 10.0.0.2
   kademliaNodes:
-    image: larjim/kademlialab:latest
+    image: kadlab:latest
     stdin_open: true
     tty: true
     deploy:
@@ -18,6 +39,8 @@ services:
       - kademlia_network
     volumes:
       - ../:/code
+      - ./init/node/:/init
       
 networks:
   kademlia_network:
+

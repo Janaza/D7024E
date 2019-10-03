@@ -1,5 +1,5 @@
 package main
-
+//powershell.exe -executionpolicy bypass .\run.ps1
 import (
 	d "D7024E"
 	"bufio"
@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 var wg sync.WaitGroup
@@ -51,11 +52,15 @@ func main() {
 			//Check if my bucket was updated
 			myContacts := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
 			if len(myContacts) == 0 {
-				ErrorHandler(errors.New("pinging bootstrap failed or buckets weren't updated!"))
+				ErrorHandler(errors.New("pinging bootstrap failed or buckets weren't updated"))
 			}
 
 			//iterativeFindNode for new node n
-			newNode.IterativeFindNode()
+			val := newNode.IterativeFindNode()
+			for _, c := range val {
+				newNode.Kad.Rtable.AddContact(c)
+			}
+
 
 			//Update the k-buckets further away than the one bootstrap node falls in
 			/*
@@ -90,12 +95,36 @@ func main() {
 					fmt.Println("Got following contacts: ")
 					fmt.Println(x)
 				}
+				/*Placeholder
+				PUT
+				GET
+				EXIT
+				 */
+				if text[:3] == "PUT"{
+					storeData := []byte(text[4:])
+					fmt.Println("Storing data on other nodes")
+						newNode.IterativeStore(storeData)
+
+
+
+				}
+				if text[:3] == "GET"{
+					fmt.Println("Fetching data...")
+					newNode.SendFindDataMessage("")
+				}
+				if text[:4] == "EXIT" {
+					fmt.Println("Node is shutting down in 3 seconds...")
+					time.Sleep(3 * time.Second)
+					os.Exit(0)
+				}
+
 			}
 		}
 	}()
 	wg.Wait()
 
 }
+//ErrorHandler to not fill code with if statements
 func ErrorHandler(err error) {
 	if err != nil {
 		log.Fatal(err)
