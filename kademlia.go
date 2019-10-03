@@ -1,6 +1,8 @@
 package D7024E
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"crypto/sha1"
@@ -141,4 +143,10 @@ func qsort(contact []Contact, target Contact) []Contact {
 	qsort(contact[left+1:], target)
 
 	return contact
+}
+
+func (kademlia *Kademlia) HashData(data []byte) string{
+	hashedData := sha1.Sum(data)
+	hashedStringdata := hex.EncodeToString(hashedData[0:20])
+	return hashedStringdata
 }
