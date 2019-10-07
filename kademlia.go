@@ -5,8 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
-	"crypto/sha1"
-	"encoding/hex"
 )
 
 type Kademlia struct {
@@ -95,9 +93,115 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 	}
 }
 
-func (kademlia *Kademlia) LookupData(hash string) {
-	// TODO iterativeFindValue
+func (kademlia *Kademlia) LookupData(network Network, target Contact, hash string) string {
 
+
+	alpha := 3
+	value := make(chan string)
+	found := make(chan []Contact)
+	var closestNode Contact
+	var x []Contact
+	var y string
+	myClosest := network.Kad.Rtable.FindClosestContacts(target.ID, alpha)
+	closestNode = myClosest[0]
+	var shortlist []Contact
+	doublet := make(map[string]bool)
+	for _, mine := range myClosest {
+		shortlist = append(shortlist, mine)
+		doublet[mine.ID.String()] = true
+	}
+
+	runningRoutines := 0
+	for runningRoutines < 3 && len(shortlist) > 1 {
+		go network.SendFindDataMessage(hash, &shortlist[runningRoutines], found, value)
+		x = <-found
+		y = <-value
+		if y != "" {
+			runningRoutines = 0
+			return y
+		}
+		runningRoutines++
+		/*
+		for _, i := range x{
+			fmt.Println(i.ID)
+		}
+
+		 */
+	}
+
+
+	if len(shortlist) == 1 {
+		runningRoutines++
+		go network.SendFindDataMessage(hash, &shortlist[0], found, value)
+		x = <-found
+		y = <-value
+		if y != "" {
+			runningRoutines = 0
+			return y
+		}
+		/*
+		for _, i := range x{
+			fmt.Println(i.ID)
+		}
+
+		 */
+
+	}
+
+	for runningRoutines > 0 && len(x) > 0 {
+		recived := x
+		for _, candidate := range recived {
+			if !(candidate.Address == network.Contact.Address) && !(candidate.ID == nil) {
+				if doublet[candidate.ID.String()] == false {
+					doublet[candidate.ID.String()] = true
+					candidate.CalcDistance(network.Contact.ID)
+					shortlist = append(shortlist, candidate)
+				}
+			}
+		}
+		shortlist = qsort(shortlist, target)
+		runningRoutines--
+		if closestNode.ID.String() != shortlist[0].ID.String() {
+			closestNode.ID = shortlist[0].ID
+			for i := range shortlist {
+				if i >= 3 {
+					break
+				}
+				runningRoutines++
+				go network.SendFindDataMessage(hash, &shortlist[i], found, value)
+				x = <-found
+				y = <- value
+				if y != "" {
+					runningRoutines = 0
+					return y
+				}
+				/*
+				for _, i := range x{
+					fmt.Println(i.ID)
+				}
+
+				 */
+
+			}
+		}
+	}
+
+	shortlist = qsort(shortlist, target)
+
+	var shortlistString string
+
+
+	if len(shortlist) > 20 {
+		for _, i := range shortlist[:20]{
+			shortlistString = shortlistString + i.String() + "\n"
+		}
+	} else {
+		for _, i := range shortlist {
+			shortlistString = shortlistString + i.String() + "\n"
+		}
+	}
+
+	return shortlistString
 }
 
 func (kademlia *Kademlia) Store(data []byte, network *Network) {
@@ -143,10 +247,4 @@ func qsort(contact []Contact, target Contact) []Contact {
 	qsort(contact[left+1:], target)
 
 	return contact
-}
-
-func (kademlia *Kademlia) HashData(data []byte) string{
-	hashedData := sha1.Sum(data)
-	hashedStringdata := hex.EncodeToString(hashedData[0:20])
-	return hashedStringdata
 }
