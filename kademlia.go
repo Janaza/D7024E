@@ -93,9 +93,8 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 	}
 }
 
+
 func (kademlia *Kademlia) LookupData(network Network, target Contact, hash string) string {
-
-
 	alpha := 3
 	value := make(chan string)
 	found := make(chan []Contact)

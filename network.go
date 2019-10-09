@@ -235,15 +235,13 @@ func (network *Network) SendFindContactMessage(contact *Contact, found chan []Co
 
 }
 
+
 func (network *Network) SendFindDataMessage(hash string, contact *Contact, found chan []Contact, value chan string) {
-
-
 	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)
 	defer connection.Close()
-
-	msg := FindDataMsg(hash)
+  msg := FindDataMsg(hash)
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
 
@@ -252,6 +250,7 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact, found
 	respmsg := make([]byte, 2048)
 	n, err := connection.Read(respmsg)
 	ErrorHandler(err)
+
 
 	c := make([]Contact, 0)
 	if string(respmsg[:2]) == "OK"{
@@ -262,23 +261,15 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact, found
 		found <- c
 		value <- ""
 	}
-
-
-	//fmt.Println(string(respmsg[:n]))
-
-
 }
 
 func FindDataMsg(hash string) []byte {
 	msg := []byte("FIND_VALUE " + hash)
 	return msg
-
 }
 
 
-
 func (network *Network) HandleFindDataMsg(msg []byte, resp response) []Contact{
-
 	if value, ok := network.Kad.hashmap[string(msg)]; !ok{
 		closeContactsArr := network.Kad.Rtable.FindClosestContacts(NewKademliaID(string(msg[:40])), 20)
 		_, err := resp.servr.WriteToUDP(ContactToByte(closeContactsArr), resp.resp)
@@ -294,20 +285,23 @@ func (network *Network) HandleFindDataMsg(msg []byte, resp response) []Contact{
 		return me
 	}
 
+
+	//Return reply k closest or hash + value (hashmap)
+	
 }
+
 
 func (network *Network) IterativeFindNode() []Contact{
 	result := make(chan []Contact)
 	go network.Kad.LookupContact(*network, result, *network.Contact)
 	done := <-result
 	fmt.Printf("\nIterativeFindNode done, found %d contacts\n", len(done))
-	return done
+	//return done
 }
 
 func (network *Network) IterativeStore(data []byte){
 	network.Kad.Store(data, network)
 }
-
 
 func (network *Network) IterativeFindData(hash string){
 
@@ -319,7 +313,6 @@ func (network *Network) IterativeFindData(hash string){
 	}
 
 }
-
 
 func ByteToContact(msg []byte) []Contact {
 	s := string(msg)

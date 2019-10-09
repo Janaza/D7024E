@@ -136,9 +136,6 @@ func main() {
 					default:
 						fmt.Println("No operation")
 				}
-
-
-
 			}
 		}
 	}()
