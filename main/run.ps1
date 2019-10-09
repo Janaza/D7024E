@@ -1,5 +1,5 @@
 ﻿$file = "$pwd\main.exe" 
-$bootstrap = "10.0.75.1:1"
+$bootstrap = "localhost:1"
 go build .\main.go
 Start-Sleep -Seconds 2
 Start-Process powershell.exe -ArgumentList $file, "1"

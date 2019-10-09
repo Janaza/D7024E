@@ -244,9 +244,10 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact, found
 	defer connection.Close()
 
 	msg := FindDataMsg(hash)
-
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
+
+
 	//fmt.Println("sent: " + string(msg) + " to: " + contact.Address)
 	respmsg := make([]byte, 2048)
 	n, err := connection.Read(respmsg)
@@ -255,7 +256,7 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact, found
 	c := make([]Contact, 0)
 	if string(respmsg[:2]) == "OK"{
 		found <- c
-		value <- string(respmsg[4:n])
+		value <- string(respmsg[:n])
 	} else{
 		c = ByteToContact(respmsg[:n])
 		found <- c
@@ -264,6 +265,8 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact, found
 
 
 	//fmt.Println(string(respmsg[:n]))
+
+
 }
 
 func FindDataMsg(hash string) []byte {
@@ -309,7 +312,12 @@ func (network *Network) IterativeStore(data []byte){
 func (network *Network) IterativeFindData(hash string){
 
 	result := network.Kad.LookupData(*network, NewContact(NewKademliaID(hash), ""), hash)
-	fmt.Println("Found value: " + result)
+	if result[:2] ==  "OK" {
+		fmt.Println("Value found: " + result[4:])
+	}	else{
+		fmt.Println("Value not found. \nK closest contacts: " + result )
+	}
+
 }
 
 

@@ -105,6 +105,7 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 	myClosest := network.Kad.Rtable.FindClosestContacts(target.ID, alpha)
 	closestNode = myClosest[0]
 	var shortlist []Contact
+	var noKeyShortlist []Contact
 	doublet := make(map[string]bool)
 	for _, mine := range myClosest {
 		shortlist = append(shortlist, mine)
@@ -116,7 +117,11 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 		go network.SendFindDataMessage(hash, &shortlist[runningRoutines], found, value)
 		x = <-found
 		y = <-value
-		if y != "" {
+		if y != ""{
+			if len(noKeyShortlist)>0 {
+				fmt.Println("Storing at closest contact")
+				kademlia.net.SendStoreMessage(&noKeyShortlist[0], []byte(y))
+			}
 			runningRoutines = 0
 			return y
 		}
@@ -127,6 +132,14 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 		}
 
 		 */
+		for _, i := range x{
+			if i.ID != nil {
+				//fmt.Println(i.ID)
+				i.CalcDistance(target.ID)
+				noKeyShortlist = append(noKeyShortlist, i)
+			}
+		}
+		noKeyShortlist = qsort(noKeyShortlist, target)
 	}
 
 
@@ -135,7 +148,10 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 		go network.SendFindDataMessage(hash, &shortlist[0], found, value)
 		x = <-found
 		y = <-value
-		if y != "" {
+		if y != ""{
+			if len(noKeyShortlist)>0 {
+				kademlia.net.SendStoreMessage(&noKeyShortlist[0], []byte(y))
+			}
 			runningRoutines = 0
 			return y
 		}
@@ -145,6 +161,11 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 		}
 
 		 */
+		for _, i := range x{
+			i.CalcDistance(target.ID)
+			noKeyShortlist = append(noKeyShortlist, i)
+		}
+		noKeyShortlist = qsort(noKeyShortlist, target)
 
 	}
 
@@ -154,7 +175,7 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 			if !(candidate.Address == network.Contact.Address) && !(candidate.ID == nil) {
 				if doublet[candidate.ID.String()] == false {
 					doublet[candidate.ID.String()] = true
-					candidate.CalcDistance(network.Contact.ID)
+					candidate.CalcDistance(target.ID)
 					shortlist = append(shortlist, candidate)
 				}
 			}
@@ -171,7 +192,10 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 				go network.SendFindDataMessage(hash, &shortlist[i], found, value)
 				x = <-found
 				y = <- value
-				if y != "" {
+				if y != ""{
+					if len(noKeyShortlist)>0 {
+						kademlia.net.SendStoreMessage(&noKeyShortlist[0], []byte(y))
+					}
 					runningRoutines = 0
 					return y
 				}
@@ -181,6 +205,11 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 				}
 
 				 */
+				for _, i := range x{
+					i.CalcDistance(target.ID)
+					noKeyShortlist = append(noKeyShortlist, i)
+				}
+				noKeyShortlist = qsort(noKeyShortlist, target)
 
 			}
 		}
@@ -207,7 +236,7 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 func (kademlia *Kademlia) Store(data []byte, network *Network) {
 	ch := make(chan []Contact)
 	contact := NewContact(NewKademliaID(HashData(data)), "")
-	fmt.Println(contact.ID)
+	//fmt.Println(contact.ID)
 	go kademlia.LookupContact(*network, ch, contact)
 	done :=  <- ch
 	for _, c := range done{

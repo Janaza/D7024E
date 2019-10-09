@@ -93,7 +93,11 @@ func main() {
 					case text[:3] == "GET":
 						hashData := text[4:]
 						fmt.Println("Fetching data...")
-						newNode.IterativeFindData(hashData)
+						if len(hashData) == 40 {
+							newNode.IterativeFindData(hashData)
+						}	else{
+							fmt.Println("The length of hash is wrong.")
+						}
 
 					case text[:4] == "EXIT":
 						fmt.Println("Node is shutting down in 3 seconds...")
@@ -104,6 +108,15 @@ func main() {
 						node := d.NewContact(nil, text[5:])
 						newNode.SendPingMessage(&node)
 
+					case text [:5] == "STORE":
+						storeData := []byte(text[6:9])
+						node := d.NewContact(nil, text[10:])
+						newNode.SendStoreMessage(&node, storeData)
+
+					case text[:8] == "CONTACTS":
+						for _, i := range newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160){
+							fmt.Println(i.Address)
+						}
 					/*
 					case text[:4] == "FIND":
 						node := d.NewContact(d.NewKademliaID(text[5:]), text[46:])
