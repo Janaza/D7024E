@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
+
 	//"strconv"
 	"strings"
 	//"net/http"
@@ -130,8 +132,11 @@ func (network *Network) HandleFindNodeMsg(msg []byte, resp response) []Contact {
 
 	_, err := resp.servr.WriteToUDP(ContactToByte(closeContactsArr), resp.resp)
 	ErrorHandler(err)
-
-	return closeContactsArr
+	//closeContactsArr = make([]Contact, 0)
+	//closeContactsArr = append(closeContactsArr,))
+	returnmsg := make([]Contact, 1)
+	returnmsg[0] = NewContact(nil, strconv.Itoa(len(closeContactsArr)))
+	return  returnmsg
 }
 
 
@@ -192,7 +197,7 @@ func (network *Network) Listen(contact Contact, port int) {
 		handledContact := network.msgHandle(msgbuf[:n], *Response)
 		fmt.Println("Msg from a friend: ", string(msgbuf[:n]))
 		fmt.Println("\nResponded with:  ", handledContact)
-		fmt.Println(network.Kad.hashmap)
+
 	}
 }
 func (network *Network) SendPingMessage(contact *Contact) {
@@ -296,7 +301,7 @@ func (network *Network) IterativeFindNode() []Contact{
 	go network.Kad.LookupContact(*network, result, *network.Contact)
 	done := <-result
 	fmt.Printf("\nIterativeFindNode done, found %d contacts\n", len(done))
-	//return done
+	return done
 }
 
 func (network *Network) IterativeStore(data []byte){
