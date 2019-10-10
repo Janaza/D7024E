@@ -246,7 +246,7 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact, found
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)
 	defer connection.Close()
-  msg := FindDataMsg(hash)
+ 	 msg := FindDataMsg(hash)
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
 
@@ -289,9 +289,6 @@ func (network *Network) HandleFindDataMsg(msg []byte, resp response) []Contact{
 		me = append(me, *network.Contact)
 		return me
 	}
-
-
-	//Return reply k closest or hash + value (hashmap)
 	
 }
 
