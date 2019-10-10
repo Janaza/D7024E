@@ -9,6 +9,7 @@ import (
 	//"net/http"
 )
 
+
 type Network struct {
 	IP      string
 	Port    int

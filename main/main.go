@@ -17,6 +17,8 @@ import (
 
 var wg sync.WaitGroup
 
+
+
 func main() {
 	runtime.GOMAXPROCS(1)
 	//Read port from args
