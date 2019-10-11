@@ -181,7 +181,7 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 					doublet[candidate.ID.String()] = true
 					candidate.CalcDistance(target.ID)
 					shortlist = append(shortlist, candidate)
-					fmt.Println("line 184")
+					//fmt.Println("line 184")
 				}
 			}
 		}
@@ -195,7 +195,7 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 
 				if visited[shortlist[i].ID.String()] == false {
 					visited[shortlist[i].ID.String()] = true
-					fmt.Println("Line 193" + shortlist[i].Address)
+					//fmt.Println("Line 193" + shortlist[i].Address)
 					//if i >= 3 {
 					//break
 					//}
