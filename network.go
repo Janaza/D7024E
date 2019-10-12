@@ -155,7 +155,6 @@ func HandlePongMsg(msg []byte) Contact {
 func ipToString(array []byte) string {
 	ipString := string(array[1+ID_INDEX:])
 	return ipString
-
 }
 
 func (network *Network) msgHandle(msg []byte, resp response) []Contact {
