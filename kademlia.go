@@ -59,10 +59,6 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 
 	for iRoutines > 0 {
 		recived := x
-		if len(recived) == 0 {
-			result = make(chan []Contact, 0)
-			return
-		}
 		for _, candidate := range recived {
 			if !(candidate.Address == network.Contact.Address) && !(candidate.ID == nil) {
 				if doublet[candidate.ID.String()] == false {

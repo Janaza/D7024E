@@ -108,8 +108,6 @@ func (network *Network) HandleFindNodeMsg(msg []byte, resp response) []Contact {
 
 	_, err := resp.servr.WriteToUDP(ContactToByte(closeContactsArr), resp.resp)
 	ErrorHandler(err)
-	//closeContactsArr = make([]Contact, 0)
-	//closeContactsArr = append(closeContactsArr,))
 	returnmsg := make([]Contact, 1)
 	returnmsg[0] = NewContact(nil, strconv.Itoa(len(closeContactsArr)))
 	return returnmsg
@@ -189,16 +187,16 @@ func (network *Network) SendPingMessage(contact *Contact) {
 	ErrorHandler(err)
 
 	if string(respmsg[:4]) == "PONG" {
-		fmt.Println("Adding the following PONGER to a Bucket...")
 		pongContact := HandlePongMsg(respmsg[5:n])
 		network.Kad.Rtable.AddContact(pongContact)
-		fmt.Println(pongContact.ID.String() + " " + pongContact.Address)
+		fmt.Println("recv: PONG ID: " + pongContact.ID.String() + " IP: " + pongContact.Address + "\n")
 	}
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact, found chan []Contact, sl *Shortlist) {
 	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
+	connection.SetDeadline(time.Now().Add(50 * time.Millisecond))
 	ErrorHandler(err)
 	defer connection.Close()
 	msg := FindNodeMsg(contact)
@@ -207,22 +205,25 @@ func (network *Network) SendFindContactMessage(contact *Contact, found chan []Co
 	ErrorHandler(err)
 	fmt.Println("sent: " + string(msg) + " to: " + contact.Address)
 	respmsg := make([]byte, 2048)
-	connection.SetReadDeadline(time.Now().Add(2 * time.Second))
+	connection.SetReadDeadline(time.Now().Add(50 * time.Millisecond))
+	var c []Contact
 	for {
 		n, err := connection.Read(respmsg)
 		if err != nil {
-			if e, ok := err.(net.Error); !ok || !e.Timeout() {
+			if e, ok := err.(net.Error); !ok && !e.Timeout() {
 				ErrorHandler(e)
+				c = make([]Contact, 0)
+				break
 			}
 			fmt.Println("Node offline!")
 			sl.removeContact(*contact)
-			found <- make([]Contact, 0)
+			c = make([]Contact, 0)
 			break
 		}
-		c := ByteToContact(respmsg[:n])
-		found <- c
+		c = ByteToContact(respmsg[:n])
 		break
 	}
+	found <- c
 }
 
 func (network *Network) SendFindDataMessage(hash string, contact *Contact, found chan []Contact, value chan string) {
@@ -277,7 +278,7 @@ func (network *Network) IterativeFindNode() []Contact {
 	result := make(chan []Contact)
 	go network.Kad.LookupContact(*network, result, *network.Contact)
 	done := <-result
-	fmt.Printf("\nIterativeFindNode done, found %d contacts\n", len(done))
+	fmt.Printf("\nIterativeFindNode done, found %d contacts \n", len(done))
 	return done
 }
 
