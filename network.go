@@ -74,30 +74,6 @@ func (network *Network) HandleStoreMsg(msg []byte, resp response)[]Contact{
 		ErrorHandler(err)
 
 	}
-	/*for _, dataFile := range network.Kad.data {
-		if dataFile.Hash == hashedData {
-			fmt.Println("File already stored")
-			reply := []byte("File already stored " + network.Contact.ID.String() + " " + network.Contact.Address)
-			_, err := resp.servr.WriteToUDP(reply, resp.resp)
-			ErrorHandler(err)
-
-		} else {
-			fmt.Println("Storing " + string(msg[42:]) + " with hash " + hashedData)
-			dataFile := dataStruct{hashedData, msg[42:]}
-			network.Kad.data = append(network.Kad.data, dataFile)
-			reply := []byte("File succesfully stored " + network.Contact.ID.String() + " " + network.Contact.Address)
-			_, err := resp.servr.WriteToUDP(reply, resp.resp)
-			ErrorHandler(err)
-		}
-	}
-	if len(network.Kad.data) == 0{
-		fmt.Println("Storing " + string(msg[42:]) + " with hash " + hashedData)
-		dataFile := dataStruct{hashedData, msg[42:]}
-		network.Kad.data = append(network.Kad.data, dataFile)
-		reply := []byte("File succesfully stored " + network.Contact.ID.String() + " " + network.Contact.Address)
-		_, err := resp.servr.WriteToUDP(reply, resp.resp)
-		ErrorHandler(err)
-	}*/
 	contact := NewContact(network.Contact.ID, network.Contact.Address)
 
 	reply := []byte("Store answer " + network.Contact.ID.String() + " " + network.Contact.Address)
