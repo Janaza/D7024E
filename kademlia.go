@@ -80,12 +80,6 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 		}
 	}
 	shortlist = qsort(shortlist, target)
-	/* //Shows that list is sorted
-	for _, c := range shortlist {
-		dist := c.ID.CalcDistance(target.ID)
-		fmt.Println(dist.String())
-	}
-	*/
 	if len(shortlist) > 20 {
 		result <- shortlist[:20]
 	} else {
@@ -98,11 +92,9 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 	alpha := 3
 	value := make(chan string)
 	found := make(chan []Contact)
-	//var closestNode Contact
 	var x []Contact
 	var y string
 	myClosest := network.Kad.Rtable.FindClosestContacts(target.ID, alpha)
-	//closestNode = myClosest[0]
 	var shortlist []Contact
 	var noKeyShortlist []Contact
 	doublet := make(map[string]bool)
@@ -126,12 +118,6 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 			return y
 		}
 		runningRoutines++
-		/*
-		for _, i := range x{
-			fmt.Println(i.ID)
-		}
-
-		 */
 		for _, i := range x{
 			if i.ID != nil {
 				i.CalcDistance(target.ID)
@@ -155,12 +141,6 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 			runningRoutines = 0
 			return y
 		}
-		/*
-		for _, i := range x{
-			fmt.Println(i.ID)
-		}
-
-		 */
 		for _, i := range x{
 			if i.ID != nil {
 				i.CalcDistance(target.ID)
@@ -172,10 +152,9 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 	}
 
 	for runningRoutines > 0 && len(x) > 0 {
-		//fmt.Println("Line 175")
+
 		recived := x
 		for _, candidate := range recived {
-			//fmt.Println("Line 178")
 			if !(candidate.Address == network.Contact.Address) && !(candidate.ID == nil) {
 				if doublet[candidate.ID.String()] == false {
 					doublet[candidate.ID.String()] = true
@@ -188,17 +167,10 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 		shortlist = qsort(shortlist, target)
 		runningRoutines--
 
-
-		//if closestNode.ID.String() != shortlist[0].ID.String(){
-			//closestNode = shortlist[0]
 			for i := range shortlist {
 
 				if visited[shortlist[i].ID.String()] == false {
 					visited[shortlist[i].ID.String()] = true
-					//fmt.Println("Line 193" + shortlist[i].Address)
-					//if i >= 3 {
-					//break
-					//}
 					runningRoutines++
 					go network.SendFindDataMessage(hash, &shortlist[i], found, value)
 					x = <-found
@@ -211,12 +183,6 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 						runningRoutines = 0
 						return y
 					}
-					/*
-						for _, i := range x{
-							fmt.Println(i.ID)
-						}
-
-					*/
 					for _, i := range x {
 						if i.ID != nil {
 							i.CalcDistance(target.ID)
@@ -226,7 +192,6 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 					noKeyShortlist = qsort(noKeyShortlist, target)
 				}
 			}
-		//}
 	}
 
 	shortlist = qsort(shortlist, target)
