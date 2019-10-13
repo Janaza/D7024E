@@ -17,7 +17,6 @@ type dataStruct struct {
 	Hash  string
 	Value []byte
 }
-
 type Shortlist struct {
 	ls []Contact
 	v  map[string]bool
@@ -31,26 +30,27 @@ func InitKad(me Contact) *Kademlia {
 	return node
 }
 
+const a = 3
+
 func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, target Contact) {
-	alpha := 3
-	found := make(chan []Contact)
 	var closestNode Contact
 	var x []Contact
-	myClosest := network.Kad.Rtable.FindClosestContacts(target.ID, alpha)
+	found := make(chan []Contact)
+	doublet := make(map[string]bool)
+	iRoutines := 0
+	myClosest := network.Kad.Rtable.FindClosestContacts(target.ID, a)
 	closestNode = myClosest[0]
 	sl := &Shortlist{
 		ls: make([]Contact, 0),
 		v:  make(map[string]bool),
 	}
-	doublet := make(map[string]bool)
 
 	for _, mine := range myClosest {
 		sl.insert(false, mine)
 		doublet[mine.ID.String()] = true
 	}
 
-	iRoutines := 0
-	for iRoutines < 3 && iRoutines < len(sl.ls) {
+	for iRoutines < a && iRoutines < len(sl.ls) {
 		go network.SendFindContactMessage(&sl.ls[iRoutines], found, sl)
 		x = <-found
 		sl.v[sl.ls[iRoutines].ID.String()] = true
@@ -75,10 +75,9 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 		sl.ls = qsort(sl.ls, target)
 		iRoutines--
 		if closestNode.ID.String() != sl.ls[0].ID.String() {
-			fmt.Println("new closest")
 			closestNode.ID = sl.ls[0].ID
 			for i := range sl.ls {
-				if i >= 3 || i >= len(sl.ls) {
+				if i >= a || i >= len(sl.ls) {
 					break
 				}
 				if sl.v[sl.ls[i].ID.String()] == false {
@@ -92,6 +91,9 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 		}
 	}
 	for i, c := range sl.ls {
+		if i >= len(sl.ls) {
+			break
+		}
 		if sl.v[sl.ls[i].ID.String()] == false {
 			go network.SendFindContactMessage(&c, found, sl)
 			x = <-found
