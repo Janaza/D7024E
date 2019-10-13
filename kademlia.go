@@ -8,9 +8,9 @@ import (
 )
 
 type Kademlia struct {
-	Rtable *RoutingTable
-	data []dataStruct
-	net	Network
+	Rtable  *RoutingTable
+	data    []dataStruct
+	net     Network
 	hashmap map[string][]byte
 }
 type dataStruct struct {
@@ -20,7 +20,7 @@ type dataStruct struct {
 
 func InitKad(me Contact) *Kademlia {
 	node := &Kademlia{
-		Rtable: NewRoutingTable(me),
+		Rtable:  NewRoutingTable(me),
 		hashmap: make(map[string][]byte),
 	}
 	return node
@@ -44,6 +44,10 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 	for runningRoutines < 3 && len(shortlist) > 1 {
 		go network.SendFindContactMessage(&shortlist[runningRoutines], found)
 		x = <-found
+		if len(x) == 0 {
+			copy(shortlist[runningRoutines:], shortlist[runningRoutines+1:])
+			shortlist = shortlist[:len(shortlist)-1]
+		}
 		runningRoutines++
 	}
 	if len(shortlist) == 1 {
@@ -55,6 +59,10 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 
 	for runningRoutines > 0 {
 		recived := x
+		if len(recived) == 0 {
+			result = make(chan []Contact, 0)
+			return
+		}
 		for _, candidate := range recived {
 			if !(candidate.Address == network.Contact.Address) && !(candidate.ID == nil) {
 				if doublet[candidate.ID.String()] == false {
@@ -75,6 +83,10 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 				runningRoutines++
 				go network.SendFindContactMessage(&shortlist[i], found)
 				x = <-found
+				if len(x) == 0 {
+					copy(shortlist[i:], shortlist[i+1:])
+					shortlist = shortlist[:len(shortlist)-1]
+				}
 
 			}
 		}
