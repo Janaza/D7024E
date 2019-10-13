@@ -12,5 +12,4 @@
 # $ docker build . -t kadlab
 FROM golang:latest
 WORKDIR /go/src/D7024E
-RUN go install ./main/...
 ENTRYPOINT ["/init/init.sh"]
