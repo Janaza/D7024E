@@ -56,19 +56,6 @@ func Cli(network *Network) {
 			
 		default:
 			fmt.Sprintln("CLI not recognized")
-
-		/*
-		case text[:4] == "FIND":
-			node := d.NewContact(d.NewKademliaID(text[5:]), text[46:])
-			go newNode.SendFindContactMessage(&node, out)
-			x := <-out
-			fmt.Println("Got following contacts: ")
-			fmt.Println(x)
-
-		case text[:10] == "FIND_VALUE":
-			fmt.Println(text[11:])
-			newNode.SendFindDataMessage(text[11:51], text[52:])
-		 */
 		}
 
 	}
