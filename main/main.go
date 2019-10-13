@@ -1,8 +1,7 @@
 package main
-
+//powershell.exe -executionpolicy bypass .\run.ps1
 import (
 	d "D7024E"
-	"bufio"
 	"errors"
 	"fmt"
 	"log"
@@ -51,11 +50,15 @@ func main() {
 			//Check if my bucket was updated
 			myContacts := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
 			if len(myContacts) == 0 {
-				ErrorHandler(errors.New("pinging bootstrap failed or buckets weren't updated!"))
+				ErrorHandler(errors.New("pinging bootstrap failed or buckets weren't updated"))
 			}
 
 			//iterativeFindNode for new node n
-			newNode.IterativeFindNode()
+			val := newNode.IterativeFindNode()
+			for _, c := range val {
+				newNode.Kad.Rtable.AddContact(c)
+			}
+
 
 			//Update the k-buckets further away than the one bootstrap node falls in
 			/*
@@ -68,34 +71,14 @@ func main() {
 		}
 
 	}
-	out := make(chan []d.Contact)
+	//out := make(chan []d.Contact)
 	wg.Add(2)
 	go newNode.Listen(me, iPort) //Handle any RPC
-	go func() {                  //Handle cli at the same time as RCP
-		cli := bufio.NewScanner(os.Stdin)
-		fmt.Println("Listening on cli")
-		for {
-			cli.Scan()
-			text := cli.Text()
-			if len(text) != 0 {
-				fmt.Println(text)
-				if text[:4] == "PING" {
-					node := d.NewContact(nil, text[5:])
-					newNode.SendPingMessage(&node)
-				}
-				if text[:4] == "FIND" {
-					node := d.NewContact(d.NewKademliaID(text[5:]), text[46:])
-					go newNode.SendFindContactMessage(&node, out)
-					x := <-out
-					fmt.Println("Got following contacts: ")
-					fmt.Println(x)
-				}
-			}
-		}
-	}()
+	go d.Cli(newNode)
 	wg.Wait()
 
 }
+//ErrorHandler to not fill code with if statements
 func ErrorHandler(err error) {
 	if err != nil {
 		log.Fatal(err)

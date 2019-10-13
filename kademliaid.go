@@ -71,3 +71,4 @@ func (kademliaID KademliaID) CalcDistance(target *KademliaID) *KademliaID {
 func (kademliaID *KademliaID) String() string {
 	return hex.EncodeToString(kademliaID[0:IDLength])
 }
+//
