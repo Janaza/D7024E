@@ -5,6 +5,8 @@ import (
 	"log"
 	"net"
 	"strconv"
+
+	//"strconv"
 	"strings"
 	//"net/http"
 )
@@ -72,30 +74,6 @@ func (network *Network) HandleStoreMsg(msg []byte, resp response)[]Contact{
 		ErrorHandler(err)
 
 	}
-	/*for _, dataFile := range network.Kad.data {
-		if dataFile.Hash == hashedData {
-			fmt.Println("File already stored")
-			reply := []byte("File already stored " + network.Contact.ID.String() + " " + network.Contact.Address)
-			_, err := resp.servr.WriteToUDP(reply, resp.resp)
-			ErrorHandler(err)
-
-		} else {
-			fmt.Println("Storing " + string(msg[42:]) + " with hash " + hashedData)
-			dataFile := dataStruct{hashedData, msg[42:]}
-			network.Kad.data = append(network.Kad.data, dataFile)
-			reply := []byte("File succesfully stored " + network.Contact.ID.String() + " " + network.Contact.Address)
-			_, err := resp.servr.WriteToUDP(reply, resp.resp)
-			ErrorHandler(err)
-		}
-	}
-	if len(network.Kad.data) == 0{
-		fmt.Println("Storing " + string(msg[42:]) + " with hash " + hashedData)
-		dataFile := dataStruct{hashedData, msg[42:]}
-		network.Kad.data = append(network.Kad.data, dataFile)
-		reply := []byte("File succesfully stored " + network.Contact.ID.String() + " " + network.Contact.Address)
-		_, err := resp.servr.WriteToUDP(reply, resp.resp)
-		ErrorHandler(err)
-	}*/
 	contact := NewContact(network.Contact.ID, network.Contact.Address)
 
 	reply := []byte("Store answer " + network.Contact.ID.String() + " " + network.Contact.Address)
@@ -125,22 +103,20 @@ func (network *Network) HandlePingMsg(msg []byte, resp response) []Contact {
 }
 
 func (network *Network) HandleFindNodeMsg(msg []byte, resp response) []Contact {
+
 	closeContactsArr := network.Kad.Rtable.FindClosestContacts(NewKademliaID(string(msg[:40])), 20)
 
-	closeCToByte := make([]byte, 0)
-	closeContactsByte := make([]byte, 0)
-
-	for i := 0; i < len(closeContactsArr); i++ {
-		closeCToByte = []byte(closeContactsArr[i].ID.String() + " " + closeContactsArr[i].Address + " " + closeContactsArr[i].distance.String() + "\n")
-		closeContactsByte = append(closeContactsByte, closeCToByte[:]...)
-	}
-
-	returnMsg := make([]Contact, 1)
-	returnMsg[0] = NewContact(nil, " "+strconv.Itoa(len(closeContactsArr))+" contacts.")
-	_, err := resp.servr.WriteToUDP(closeContactsByte, resp.resp)
+	_, err := resp.servr.WriteToUDP(ContactToByte(closeContactsArr), resp.resp)
 	ErrorHandler(err)
-	return returnMsg
+	//closeContactsArr = make([]Contact, 0)
+	//closeContactsArr = append(closeContactsArr,))
+	returnmsg := make([]Contact, 1)
+	returnmsg[0] = NewContact(nil, strconv.Itoa(len(closeContactsArr)))
+	return  returnmsg
 }
+
+
+
 func HandlePongMsg(msg []byte) Contact {
 	contactID := NewKademliaID(string(msg[:ID_INDEX]))
 	ipAndPort := ipToString(msg)
@@ -197,7 +173,7 @@ func (network *Network) Listen(contact Contact, port int) {
 		handledContact := network.msgHandle(msgbuf[:n], *Response)
 		fmt.Println("Msg from a friend: ", string(msgbuf[:n]))
 		fmt.Println("\nResponded with:  ", handledContact)
-		fmt.Println(network.Kad.hashmap)
+
 	}
 }
 func (network *Network) SendPingMessage(contact *Contact) {
@@ -240,46 +216,65 @@ func (network *Network) SendFindContactMessage(contact *Contact, found chan []Co
 
 }
 
-func (network *Network) SendFindDataMessage(hash string, contact *Contact) {
 
-
+func (network *Network) SendFindDataMessage(hash string, contact *Contact, found chan []Contact, value chan string) {
 	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)
 	defer connection.Close()
-
-	msg := FindDataMsg(hash)
-
+ 	 msg := FindDataMsg(hash)
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
-	fmt.Println("sent: " + string(msg) + " to: " + contact.Address)
+
+
+	//fmt.Println("sent: " + string(msg) + " to: " + contact.Address)
 	respmsg := make([]byte, 2048)
 	n, err := connection.Read(respmsg)
 	ErrorHandler(err)
 
-	fmt.Println(string(respmsg[:n]))
+
+	c := make([]Contact, 0)
+	if string(respmsg[:2]) == "OK"{
+		found <- c
+		value <- string(respmsg[:n])
+	} else{
+		c = ByteToContact(respmsg[:n])
+		found <- c
+		value <- ""
+	}
 }
 
 func FindDataMsg(hash string) []byte {
 	msg := []byte("FIND_VALUE " + hash)
 	return msg
-
 }
-
 
 
 func (network *Network) HandleFindDataMsg(msg []byte, resp response) []Contact{
+	if value, ok := network.Kad.hashmap[string(msg)]; !ok{
+		closeContactsArr := network.Kad.Rtable.FindClosestContacts(NewKademliaID(string(msg[:40])), 20)
+		_, err := resp.servr.WriteToUDP(ContactToByte(closeContactsArr), resp.resp)
+		ErrorHandler(err)
+		return closeContactsArr
+	} else{
+		reply := []byte("OK: " + string(value))
+		_, err := resp.servr.WriteToUDP(reply, resp.resp)
+		ErrorHandler(err)
 
-	//Return reply k closest or hash + value (hashmap)
+		me := make([]Contact, 0)
+		me = append(me, *network.Contact)
+		return me
+	}
 	
 }
 
-func (network *Network) IterativeFindNode() {
+
+func (network *Network) IterativeFindNode() []Contact{
 	result := make(chan []Contact)
 	go network.Kad.LookupContact(*network, result, *network.Contact)
 	done := <-result
 	fmt.Printf("\nIterativeFindNode done, found %d contacts\n", len(done))
-	//return done
+	return done
 }
 
 func (network *Network) IterativeStore(data []byte){
@@ -287,7 +282,14 @@ func (network *Network) IterativeStore(data []byte){
 }
 
 func (network *Network) IterativeFindData(hash string){
-	network.Kad.LookupData(hash, network)
+
+	result := network.Kad.LookupData(*network, NewContact(NewKademliaID(hash), ""), hash)
+	if result[:2] ==  "OK" {
+		fmt.Println("Value found: " + result[4:])
+	}	else{
+		fmt.Println("Value not found. \nK closest contacts: " + result )
+	}
+
 }
 
 func ByteToContact(msg []byte) []Contact {
@@ -305,6 +307,20 @@ func ByteToContact(msg []byte) []Contact {
 		}
 	}
 	return arr
+}
+
+func ContactToByte (contactArr []Contact) []byte {
+
+	closeCToByte := make([]byte, 0)
+	closeContactsByte := make([]byte, 0)
+
+	for i := 0; i < len(contactArr); i++ {
+		closeCToByte = []byte(contactArr[i].ID.String() + " " + contactArr[i].Address + " " + contactArr[i].distance.String() + "\n")
+		closeContactsByte = append(closeContactsByte, closeCToByte[:]...)
+	}
+
+	return closeContactsByte
+
 }
 
 func (network *Network) SendStoreMessage(contact *Contact, data []byte) {
