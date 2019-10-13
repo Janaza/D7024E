@@ -92,7 +92,6 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 	alpha := 3
 	value := make(chan string)
 	found := make(chan []Contact)
-	//var closestNode Contact
 	var x []Contact
 	var y string
 	myClosest := network.Kad.Rtable.FindClosestContacts(target.ID, alpha)
