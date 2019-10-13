@@ -60,7 +60,7 @@ func StoreMsg(data []byte) []byte{
 }
 
 func (network *Network) HandleStoreMsg(msg []byte, resp response)[]Contact{
-	hashedData := HashData(msg[:])
+	hashedData := HashData(msg[0:])
 	fmt.Println(hashedData)
 
 	if _, ok := network.Kad.hashmap[hashedData]; !ok{
@@ -143,7 +143,7 @@ func (network *Network) msgHandle(msg []byte, resp response) []Contact {
 	case string(msg[:9]) == "FIND_NODE":
 		returnContact = network.HandleFindNodeMsg(msg[10:], resp)
 	case string(msg[:5]) == "store":
-		returnContact = network.HandleStoreMsg(msg[5:], resp)
+		returnContact = network.HandleStoreMsg(msg[6:], resp)
 	case string(msg[:10]) == "FIND_VALUE":
 		returnContact = network.HandleFindDataMsg(msg[11:], resp)
 

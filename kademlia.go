@@ -152,10 +152,8 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 	}
 
 	for runningRoutines > 0 && len(x) > 0 {
-		
 		recived := x
 		for _, candidate := range recived {
-			
 			if !(candidate.Address == network.Contact.Address) && !(candidate.ID == nil) {
 				if doublet[candidate.ID.String()] == false {
 					doublet[candidate.ID.String()] = true
@@ -167,14 +165,10 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 		}
 		shortlist = qsort(shortlist, target)
 		runningRoutines--
-
-
-
 			for i := range shortlist {
 
 				if visited[shortlist[i].ID.String()] == false {
 					visited[shortlist[i].ID.String()] = true
-
 					runningRoutines++
 					go network.SendFindDataMessage(hash, &shortlist[i], found, value)
 					x = <-found
@@ -187,7 +181,6 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 						runningRoutines = 0
 						return y
 					}
-
 					for _, i := range x {
 						if i.ID != nil {
 							i.CalcDistance(target.ID)
@@ -197,7 +190,6 @@ func (kademlia *Kademlia) LookupData(network Network, target Contact, hash strin
 					noKeyShortlist = qsort(noKeyShortlist, target)
 				}
 			}
-	
 	}
 
 	shortlist = qsort(shortlist, target)
