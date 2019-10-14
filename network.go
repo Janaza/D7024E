@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strconv"
 	"strings"
-	//"net/http"
 )
 
 type Network struct {
@@ -33,8 +31,10 @@ type response struct {
 }
 
 type data struct {
-	rpc  string `json:string`
-	data string `json:string`
+	Rpc      string    `json:"rpc,omitempty"`
+	Id       string    `json:"id,omitempty"`
+	Ip       string    `json:"ip,omitempty"`
+	Contacts []Contact `json:"data,omitempty"`
 }
 
 const ID_INDEX = 40
@@ -47,90 +47,76 @@ func ErrorHandler(err error) {
 
 //creates the content of ping
 func PingMsg(contact *Contact) *data {
-	//msg := []byte("ping " + contact.ID.String() + " " + contact.Address)
 	msg := &data{
-		rpc:  "ping",
-		data: contact.ID.String() + " " + contact.Address,
+		Rpc: "ping",
+		Id:  contact.ID.String(),
+		Ip:  contact.Address,
 	}
 	return msg
 }
 
-func FindNodeMsg(contact *Contact) []byte {
-	msg := []byte("FIND_NODE " + contact.ID.String())
+//creates the content of any message
+func createMsg(rpc string, contact *Contact, c []Contact) *data {
+	msg := &data{
+		Rpc:      rpc,
+		Id:       contact.ID.String(),
+		Ip:       contact.Address,
+		Contacts: c,
+	}
 	return msg
 }
 
-func StoreMsg(data []byte) []byte {
-	msg := []byte("store " + string(data))
-	return msg
-}
-
-func (network *Network) HandleStoreMsg(msg []byte, resp response) []Contact {
-	hashedData := HashData(msg[0:])
+func (network *Network) HandleStoreMsg(msg string, resp response) {
+	hashedData := HashData([]byte(msg))
 	fmt.Println(hashedData)
 
 	if _, ok := network.Kad.hashmap[hashedData]; !ok {
-		network.Kad.hashmap[hashedData] = msg[:]
+		network.Kad.hashmap[hashedData] = []byte(msg)
 		reply := []byte("File succesfully stored " + hashedData)
 		_, err := resp.servr.WriteToUDP(reply, resp.resp)
 		ErrorHandler(err)
 	} else {
-		reply := []byte(string(msg[:]) + " " + ("File already stored"))
+		reply := []byte(msg + " " + ("File already stored"))
 		_, err := resp.servr.WriteToUDP(reply, resp.resp)
 		ErrorHandler(err)
 
 	}
-	contact := NewContact(network.Contact.ID, network.Contact.Address)
-
-	reply := []byte("Store answer " + network.Contact.ID.String() + " " + network.Contact.Address)
-	_, err := resp.servr.WriteToUDP(reply, resp.resp)
-	ErrorHandler(err)
-	contactArr := make([]Contact, 1)
-	contactArr[0] = contact
-	return contactArr
 }
 
 //handles incoming ping msgs
-func (network *Network) HandlePingMsg(msg []byte, resp response) []Contact {
-	fmt.Println(string(msg))
-	contactID := NewKademliaID(string(msg[:ID_INDEX]))
-	ipAndPort := ipToString(msg)
-	ipAndPortstring := strings.Split(ipAndPort, ":")
-	ip, port := ipAndPortstring[0], ipAndPortstring[1]
-	contactAdrs := ip
-	contactPort := port
-	contact := NewContact(contactID, contactAdrs+":"+contactPort)
-
-	reply := []byte("PONG " + network.Contact.ID.String() + " " + network.Contact.Address)
-	_, err := resp.servr.WriteToUDP(reply, resp.resp)
-	ErrorHandler(err)
-	contactArr := make([]Contact, 1)
-	contactArr[0] = contact
-	return contactArr
+func (network *Network) HandlePingMsg(msg data, r response) {
+	contact := NewContact(NewKademliaID(msg.Id), msg.Ip)
+	network.Kad.Rtable.AddContact(contact)
+	network.SendPongMessage(r)
 }
 
-func (network *Network) HandleFindNodeMsg(msg []byte, resp response) []Contact {
-
-	closeContactsArr := network.Kad.Rtable.FindClosestContacts(NewKademliaID(string(msg[:40])), 20)
-
-	_, err := resp.servr.WriteToUDP(ContactToByte(closeContactsArr), resp.resp)
-	ErrorHandler(err)
-	//closeContactsArr = make([]Contact, 0)
-	//closeContactsArr = append(closeContactsArr,))
-	returnmsg := make([]Contact, 1)
-	returnmsg[0] = NewContact(nil, strconv.Itoa(len(closeContactsArr)))
-	return returnmsg
+func (network *Network) HandlePongMsg(msg data) {
+	contact := NewContact(NewKademliaID(msg.Id), msg.Ip)
+	network.Kad.Rtable.AddContact(contact)
+	fmt.Println("Added ponger: " + contact.Address)
 }
 
-func HandlePongMsg(msg []byte) Contact {
-	contactID := NewKademliaID(string(msg[:ID_INDEX]))
-	ipAndPort := ipToString(msg)
-	ipAndPortstring := strings.Split(ipAndPort, ":")
-	ip, port := ipAndPortstring[0], ipAndPortstring[1]
-	contactAdrs := ip
-	contactPort := port
-	contact := NewContact(contactID, contactAdrs+":"+contactPort)
-	return contact
+func (network *Network) HandleFindNodeMsg(msg data, r response) {
+	Response := &data{
+		Contacts: network.Kad.Rtable.FindClosestContacts(NewKademliaID(msg.Id), 20),
+	}
+	m, err := json.Marshal(Response)
+	_, err = r.servr.WriteToUDP(m, r.resp)
+	ErrorHandler(err)
+	fmt.Println("SENT: my contacts")
+
+}
+
+func (network *Network) HandleFindDataMsg(msg string, r response) {
+	if value, ok := network.Kad.hashmap[msg]; !ok {
+		closeContactsArr := network.Kad.Rtable.FindClosestContacts(NewKademliaID(msg), 20)
+		_, err := r.servr.WriteToUDP(ContactToByte(closeContactsArr), r.resp)
+		ErrorHandler(err)
+	} else {
+		reply := []byte("OK: " + string(value))
+		_, err := r.servr.WriteToUDP(reply, r.resp)
+		ErrorHandler(err)
+	}
 }
 
 func ipToString(array []byte) string {
@@ -139,35 +125,21 @@ func ipToString(array []byte) string {
 
 }
 
-func (network *Network) msgHandle(msg []byte, resp response) []Contact {
-	var returnContact []Contact
+func (network *Network) rpcHandle(msg data, r response) {
 	switch {
-	case string(msg[:4]) == "ping":
-		returnContact = network.HandlePingMsg(msg[5:], resp)
-		network.Kad.Rtable.AddContact(returnContact[0])
-	case string(msg[:9]) == "FIND_NODE":
-		returnContact = network.HandleFindNodeMsg(msg[10:], resp)
-	case string(msg[:5]) == "store":
-		returnContact = network.HandleStoreMsg(msg[6:], resp)
-	case string(msg[:10]) == "FIND_VALUE":
-		returnContact = network.HandleFindDataMsg(msg[11:], resp)
-
+	case strings.ToLower(msg.Rpc) == "ping":
+		network.HandlePingMsg(msg, r)
+	case strings.ToLower(msg.Rpc) == "pong":
+		network.HandlePongMsg(msg)
+	case strings.ToLower(msg.Rpc) == "find_node":
+		network.HandleFindNodeMsg(msg, r)
+	case strings.ToLower(msg.Rpc) == "store":
+		network.HandleStoreMsg(msg.Id, r)
+	case strings.ToLower(msg.Rpc) == "find_value":
+		network.HandleFindDataMsg(msg.Id, r)
 	default:
-		returnContact = append(returnContact, NewContact(nil, ""))
+		fmt.Println("Unknown RPC: " + msg.Rpc)
 	}
-	return returnContact
-}
-
-func (network *Network) rpcHandle(msg data, resp response) []Contact {
-	var returnContact []Contact
-	switch {
-	case msg.rpc == "ping":
-		returnContact = network.HandlePingMsg([]byte(msg.data), resp)
-		network.Kad.Rtable.AddContact(returnContact[0])
-	default:
-		returnContact = append(returnContact, NewContact(nil, ""))
-	}
-	return returnContact
 }
 func (network *Network) Listen(contact Contact, port int) {
 	fmt.Println("Kademlia listener is starting...")
@@ -179,44 +151,42 @@ func (network *Network) Listen(contact Contact, port int) {
 	fmt.Println("Listening on: " + listenAdrs.String() + " " + contact.ID.String() + "\n\n")
 	msg := data{}
 	for {
-		msgbuf := make([]byte, 2048)
+		msgbuf := make([]byte, 65536)
 		n, resp, err := servr.ReadFromUDP(msgbuf)
-		err = json.Unmarshal(msgbuf[:n], &msg)
-		//ErrorHandler(err)
-		fmt.Println(err)
+		ErrorHandler(err)
+		json.Unmarshal(msgbuf[:n], &msg)
 		Response := &response{
 			servr: servr,
 			resp:  resp,
 		}
-
-		//handledContact := network.msgHandle(msgbuf[:n], *Response)
-		fmt.Println("Msg from a friend: ", msg.rpc+" "+msg.data)
-		handledContact := network.rpcHandle(msg, *Response)
-		fmt.Println("\nResponded with:  ", handledContact)
+		fmt.Println("GOT: ", msg)
+		go network.rpcHandle(msg, *Response)
 
 	}
 }
 func (network *Network) SendPingMessage(contact *Contact) {
-	me := network.Contact
 	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)
 	defer connection.Close()
-	msg, err := json.Marshal(PingMsg(me))
+	msg, err := json.Marshal(createMsg("ping", network.Contact, nil))
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
-	fmt.Println("sent: " + string(msg))
-	respmsg := make([]byte, 1024)
+	fmt.Println("SENT: " + string(msg))
+	respmsg := make([]byte, 65536)
 	n, err := connection.Read(respmsg)
+	data := data{}
+	err = json.Unmarshal(respmsg[:n], &data)
 	ErrorHandler(err)
-	/*
-		if string(respmsg[:4]) == "PONG" {
-			fmt.Println("Adding the following PONGER to a Bucket...")
-			pongContact := HandlePongMsg(respmsg[5:n])
-			network.Kad.Rtable.AddContact(pongContact)
-			fmt.Println(pongContact.ID.String() + " " + pongContact.Address)
-		}
-	*/
+	network.rpcHandle(data, response{})
+}
+
+func (network *Network) SendPongMessage(c response) {
+	msg, err := json.Marshal(createMsg("pong", network.Contact, nil))
+	ErrorHandler(err)
+	_, err = c.servr.WriteToUDP(msg, c.resp)
+	ErrorHandler(err)
+	fmt.Println("SENT: ", "pong ", network.Contact)
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact, found chan []Contact) {
@@ -224,15 +194,16 @@ func (network *Network) SendFindContactMessage(contact *Contact, found chan []Co
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)
 	defer connection.Close()
-	msg := FindNodeMsg(contact)
-
+	msg, err := json.Marshal(createMsg("find_node", contact, nil))
+	ErrorHandler(err)
 	_, err = connection.Write(msg)
-	ErrorHandler(err)
-	fmt.Println("sent: " + string(msg) + " to: " + contact.Address)
-	respmsg := make([]byte, 2048)
+	fmt.Println("SENT: " + string(msg) + " to: " + contact.Address)
+	respmsg := make([]byte, 65536)
 	n, err := connection.Read(respmsg)
+	data := data{}
+	err = json.Unmarshal(respmsg[:n], &data)
 	ErrorHandler(err)
-	c := ByteToContact(respmsg[:n])
+	c := data.Contacts
 	found <- c
 
 }
@@ -242,12 +213,12 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact, found
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)
 	defer connection.Close()
-	msg := FindDataMsg(hash)
+	Response := &data{Id: hash, Rpc: "find_value"}
+	msg, err := json.Marshal(Response)
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
 
-	//fmt.Println("sent: " + string(msg) + " to: " + contact.Address)
-	respmsg := make([]byte, 2048)
+	respmsg := make([]byte, 65536)
 	n, err := connection.Read(respmsg)
 	ErrorHandler(err)
 
@@ -262,27 +233,19 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact, found
 	}
 }
 
-func FindDataMsg(hash string) []byte {
-	msg := []byte("FIND_VALUE " + hash)
-	return msg
-}
-
-func (network *Network) HandleFindDataMsg(msg []byte, resp response) []Contact {
-	if value, ok := network.Kad.hashmap[string(msg)]; !ok {
-		closeContactsArr := network.Kad.Rtable.FindClosestContacts(NewKademliaID(string(msg[:40])), 20)
-		_, err := resp.servr.WriteToUDP(ContactToByte(closeContactsArr), resp.resp)
-		ErrorHandler(err)
-		return closeContactsArr
-	} else {
-		reply := []byte("OK: " + string(value))
-		_, err := resp.servr.WriteToUDP(reply, resp.resp)
-		ErrorHandler(err)
-
-		me := make([]Contact, 0)
-		me = append(me, *network.Contact)
-		return me
-	}
-
+func (network *Network) SendStoreMessage(contact *Contact, b []byte) {
+	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
+	connection, err := net.DialUDP("udp", nil, RemoteAddress)
+	ErrorHandler(err)
+	defer connection.Close()
+	Response := &data{Id: string(b), Rpc: "store"}
+	m, err := json.Marshal(Response)
+	_, err = connection.Write(m)
+	ErrorHandler(err)
+	respmsg := make([]byte, 65536)
+	n, err := connection.Read(respmsg)
+	ErrorHandler(err)
+	fmt.Println(string(respmsg[:n]))
 }
 
 func (network *Network) IterativeFindNode() []Contact {
@@ -306,50 +269,4 @@ func (network *Network) IterativeFindData(hash string) {
 		fmt.Println("Value not found. \nK closest contacts: " + result)
 	}
 
-}
-
-func ByteToContact(msg []byte) []Contact {
-	s := string(msg)
-	slice := strings.Split(s, "\n")
-	arr := make([]Contact, 20)
-	//var contact Contact
-	for i, line := range slice {
-		if len(line) != 0 {
-			contact := NewContact(NewKademliaID(line[:40]), line[41:41+strings.Index(line[41:], " ")])
-			if len(line[41+strings.Index(line[41:], " "):]) > 2 {
-				contact.distance = NewKademliaID(line[41+strings.Index(line[41:], " "):])
-			}
-			arr[i] = contact
-		}
-	}
-	return arr
-}
-
-func ContactToByte(contactArr []Contact) []byte {
-
-	closeCToByte := make([]byte, 0)
-	closeContactsByte := make([]byte, 0)
-
-	for i := 0; i < len(contactArr); i++ {
-		closeCToByte = []byte(contactArr[i].ID.String() + " " + contactArr[i].Address + " " + contactArr[i].distance.String() + "\n")
-		closeContactsByte = append(closeContactsByte, closeCToByte[:]...)
-	}
-
-	return closeContactsByte
-
-}
-
-func (network *Network) SendStoreMessage(contact *Contact, data []byte) {
-	//me := network.Contact
-	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
-	connection, err := net.DialUDP("udp", nil, RemoteAddress)
-	ErrorHandler(err)
-	defer connection.Close()
-	msg := StoreMsg(data)
-	_, err = connection.Write(msg)
-	ErrorHandler(err)
-	respmsg := make([]byte, 1024)
-	n, err := connection.Read(respmsg)
-	ErrorHandler(err)
-	fmt.Println(string(respmsg[:n]))
 }

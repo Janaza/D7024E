@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func Cli(network *Network) {
+func (network *Network) Cli() {
 
 	cli := bufio.NewScanner(os.Stdin)
 	fmt.Println("Listening on cli")
@@ -53,11 +53,10 @@ func Cli(network *Network) {
 			for _, i := range network.Kad.Rtable.FindClosestContacts(NewKademliaID("0000000000000000000000000000000000000000"), 160) {
 				fmt.Println(i.Address)
 			}
-			
+
 		default:
 			fmt.Sprintln("CLI not recognized")
 		}
 
 	}
 }
-
