@@ -2,16 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="61baaba9-af23-45bf-8b46-f0dcb53210ed" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/D7024E.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/kademlia_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/network_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/network.go" beforeDir="false" afterPath="$PROJECT_DIR$/network.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routingtable.go" beforeDir="false" afterPath="$PROJECT_DIR$/routingtable.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routingtable_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/routingtable_test.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -70,7 +63,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Go Test.network_test.go">
+  <component name="RunManager" selected="Go Test.kademlia_test.go">
     <configuration name="go build bucket.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="D7024E" />
       <working_directory value="$PROJECT_DIR$/" />
@@ -115,7 +108,7 @@
       <filePath value="$PROJECT_DIR$/network_test.go" />
       <method v="2" />
     </configuration>
-    <configuration name="kademlia_test.go routingtable_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="kademlia_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="D7024E" />
       <working_directory value="$PROJECT_DIR$" />
       <go_parameters value="-i" />
@@ -123,7 +116,7 @@
       <kind value="FILE" />
       <package value="D7024E" />
       <directory value="$PROJECT_DIR$/" />
-      <filePath value="$PROJECT_DIR$/kademlia_test.go|$PROJECT_DIR$/routingtable_test.go" />
+      <filePath value="$PROJECT_DIR$/kademlia_test.go" />
       <method v="2" />
     </configuration>
     <configuration name="network_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -140,17 +133,17 @@
     <list>
       <item itemvalue="Go Build.go build bucket.go" />
       <item itemvalue="Go Test.go test D7024E" />
-      <item itemvalue="Go Test.kademlia_test.go routingtable_test.go" />
       <item itemvalue="Go Test.TestPingMsg in D7024E" />
       <item itemvalue="Go Test.network_test.go" />
+      <item itemvalue="Go Test.kademlia_test.go" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.kademlia_test.go" />
         <item itemvalue="Go Test.network_test.go" />
         <item itemvalue="Go Test.go test D7024E" />
         <item itemvalue="Go Test.go test D7024E" />
         <item itemvalue="Go Build.go build bucket.go" />
-        <item itemvalue="Go Test.TestPingMsg in D7024E" />
       </list>
     </recent_temporary>
   </component>
@@ -174,7 +167,7 @@
     <SUITE FILE_PATH="coverage/D7024E$routingtable_test_go__1_.out" NAME="routingtable_test.go (1) Coverage Results" MODIFIED="1570005099654" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/D7024E$routingtable_test_go__4_.out" NAME="routingtable_test.go (4) Coverage Results" MODIFIED="1570710441624" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/D7024E$routingtable_test_go.out" NAME="routingtable_test.go Coverage Results" MODIFIED="1569945533618" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/D7024E$kademlia_test_go.out" NAME="go test D7024E Coverage Results" MODIFIED="1570710726620" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/D7024E$kademlia_test_go.out" NAME="kademlia_test.go Coverage Results" MODIFIED="1570975528410" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/D7024E$kademlia_test_go_routingtable_test_go.out" NAME="kademlia_test.go routingtable_test.go Coverage Results" MODIFIED="1570710552052" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/D7024E$network_test_go.out" NAME="network_test.go Coverage Results" MODIFIED="1570718623845" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/D7024E$routingtable_test_go__2_.out" NAME="routingtable_test.go (2) Coverage Results" MODIFIED="1570091072130" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />

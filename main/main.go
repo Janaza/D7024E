@@ -106,7 +106,9 @@ func main() {
 
 					case text[:4] == "PING":
 						node := d.NewContact(nil, text[5:])
-						newNode.SendPingMessage(&node)
+						go newNode.SendPingMessage(&node)
+
+
 
 					case text [:5] == "STORE":
 						storeData := []byte(text[6:9])
