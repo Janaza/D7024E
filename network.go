@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"strings"
+	"time"
 )
 
 type Network struct {
@@ -189,9 +190,10 @@ func (network *Network) SendPongMessage(c response) {
 	fmt.Println("SENT: ", "pong ", network.Contact)
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact, found chan []Contact) {
+func (network *Network) SendFindContactMessage(contact *Contact, found chan []Contact, sl *Shortlist) {
 	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
+	connection.SetDeadline(time.Now().Add(50 * time.Millisecond))
 	ErrorHandler(err)
 	defer connection.Close()
 	msg, err := json.Marshal(createMsg("find_node", contact, nil))
@@ -199,13 +201,28 @@ func (network *Network) SendFindContactMessage(contact *Contact, found chan []Co
 	_, err = connection.Write(msg)
 	fmt.Println("SENT: " + string(msg) + " to: " + contact.Address)
 	respmsg := make([]byte, 65536)
-	n, err := connection.Read(respmsg)
 	data := data{}
-	err = json.Unmarshal(respmsg[:n], &data)
-	ErrorHandler(err)
-	c := data.Contacts
+	connection.SetReadDeadline(time.Now().Add(50 * time.Millisecond))
+	var c []Contact
+	for {
+		n, err := connection.Read(respmsg)
+		if err != nil {
+			if e, ok := err.(net.Error); !ok && !e.Timeout() {
+				ErrorHandler(e)
+				c = make([]Contact, 0)
+				break
+			}
+			fmt.Println("Node offline!")
+			sl.removeContact(*contact)
+			c = make([]Contact, 0)
+			break
+		}
+		err = json.Unmarshal(respmsg[:n], &data)
+		ErrorHandler(err)
+		c = data.Contacts
+		break
+	}
 	found <- c
-
 }
 
 func (network *Network) SendFindDataMessage(hash string, contact *Contact, found chan []Contact, value chan string) {
@@ -252,7 +269,7 @@ func (network *Network) IterativeFindNode() []Contact {
 	result := make(chan []Contact)
 	go network.Kad.LookupContact(*network, result, *network.Contact)
 	done := <-result
-	fmt.Printf("\nIterativeFindNode done, found %d contacts\n", len(done))
+	fmt.Printf("\nIterativeFindNode done, found %d contacts \n", len(done))
 	return done
 }
 

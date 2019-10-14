@@ -11,10 +11,9 @@ import (
 func (network *Network) Cli() {
 
 	cli := bufio.NewScanner(os.Stdin)
-	fmt.Println("Listening on cli")
 
 	for {
-
+		fmt.Printf("Command: \n")
 		cli.Scan()
 		text := cli.Text()
 
