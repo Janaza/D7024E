@@ -1,8 +1,8 @@
 package main
+
 //powershell.exe -executionpolicy bypass .\run.ps1
 import (
 	d "D7024E"
-	"bufio"
 	"errors"
 	"fmt"
 	"log"
@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 var wg sync.WaitGroup
@@ -61,7 +60,6 @@ func main() {
 				newNode.Kad.Rtable.AddContact(c)
 			}
 
-
 			//Update the k-buckets further away than the one bootstrap node falls in
 			/*
 				for i := 160; i > newNode.Kad.Rtable.GetBucketIndex(findBootstrap[0].ID); i-- {
@@ -76,74 +74,11 @@ func main() {
 	//out := make(chan []d.Contact)
 	wg.Add(2)
 	go newNode.Listen(me, iPort) //Handle any RPC
-	go func() {                  //Handle cli at the same time as RCP
-		cli := bufio.NewScanner(os.Stdin)
-		fmt.Println("Listening on cli")
-		for {
-			cli.Scan()
-			text := cli.Text()
-			if len(text) != 0 {
-				fmt.Println(text)
-				switch {
-					case text[:3] == "PUT":
-						storeData := []byte(text[4:])
-						fmt.Println("Storing data on other nodes")
-						newNode.IterativeStore(storeData)
-
-					case text[:3] == "GET":
-						hashData := text[4:]
-						fmt.Println("Fetching data...")
-						if len(hashData) == 40 {
-							newNode.IterativeFindData(hashData)
-						}	else{
-							fmt.Println("The length of hash is wrong.")
-						}
-
-					case text[:4] == "EXIT":
-						fmt.Println("Node is shutting down in 3 seconds...")
-						time.Sleep(3 * time.Second)
-						os.Exit(0)
-
-					case text[:4] == "PING":
-						node := d.NewContact(nil, text[5:])
-						go newNode.SendPingMessage(&node)
-
-
-
-					case text [:5] == "STORE":
-						storeData := []byte(text[6:9])
-						node := d.NewContact(nil, text[10:])
-						newNode.SendStoreMessage(&node, storeData)
-
-					case text[:8] == "CONTACTS":
-						for _, i := range newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160){
-							fmt.Println(i.Address)
-						}
-					/*
-					case text[:4] == "FIND":
-						node := d.NewContact(d.NewKademliaID(text[5:]), text[46:])
-						go newNode.SendFindContactMessage(&node, out)
-						x := <-out
-						fmt.Println("Got following contacts: ")
-						fmt.Println(x)
-
-
-
-					case text[:10] == "FIND_VALUE":
-						fmt.Println(text[11:])
-						newNode.SendFindDataMessage(text[11:51], text[52:])
-
-
-					 */
-					default:
-						fmt.Println("No operation")
-				}
-			}
-		}
-	}()
+	go d.Cli(newNode)
 	wg.Wait()
 
 }
+
 //ErrorHandler to not fill code with if statements
 func ErrorHandler(err error) {
 	if err != nil {
