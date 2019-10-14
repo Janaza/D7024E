@@ -209,13 +209,14 @@ func (network *Network) SendPingMessage(contact *Contact) {
 	respmsg := make([]byte, 1024)
 	n, err := connection.Read(respmsg)
 	ErrorHandler(err)
-
-	if string(respmsg[:4]) == "PONG" {
-		fmt.Println("Adding the following PONGER to a Bucket...")
-		pongContact := HandlePongMsg(respmsg[5:n])
-		network.Kad.Rtable.AddContact(pongContact)
-		fmt.Println(pongContact.ID.String() + " " + pongContact.Address)
-	}
+	/*
+		if string(respmsg[:4]) == "PONG" {
+			fmt.Println("Adding the following PONGER to a Bucket...")
+			pongContact := HandlePongMsg(respmsg[5:n])
+			network.Kad.Rtable.AddContact(pongContact)
+			fmt.Println(pongContact.ID.String() + " " + pongContact.Address)
+		}
+	*/
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact, found chan []Contact) {
