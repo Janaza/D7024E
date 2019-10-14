@@ -1,4 +1,5 @@
 package main
+
 //powershell.exe -executionpolicy bypass .\run.ps1
 import (
 	d "D7024E"
@@ -59,7 +60,6 @@ func main() {
 				newNode.Kad.Rtable.AddContact(c)
 			}
 
-
 			//Update the k-buckets further away than the one bootstrap node falls in
 			/*
 				for i := 160; i > newNode.Kad.Rtable.GetBucketIndex(findBootstrap[0].ID); i-- {
@@ -78,6 +78,7 @@ func main() {
 	wg.Wait()
 
 }
+
 //ErrorHandler to not fill code with if statements
 func ErrorHandler(err error) {
 	if err != nil {
