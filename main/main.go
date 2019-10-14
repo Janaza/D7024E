@@ -32,7 +32,7 @@ func main() {
 	me := d.NewContact(d.NewRandomKademliaID(), myip+":"+myport)
 	fmt.Println("I am: ", me.ID, me.Address+"\n")
 
-	newNode := d.InitNode(myip, iPort, &me)
+	newNode := d.InitNode(me, iPort)
 	//Read ip & node from args (node to join)
 	bIP := ""
 	//bNode := ""
@@ -45,10 +45,10 @@ func main() {
 			bContact := d.NewContact(nil, bIP)
 
 			//RPC PING node c and update buckets
-			newNode.SendPingMessage(&bContact)
+			newNode.Net.SendPingMessage(&bContact)
 
 			//Check if my bucket was updated
-			myContacts := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
+			myContacts := newNode.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
 			if len(myContacts) == 0 {
 				ErrorHandler(errors.New("pinging bootstrap failed or buckets weren't updated"))
 			}
@@ -56,7 +56,7 @@ func main() {
 			//iterativeFindNode for new node n
 			val := newNode.IterativeFindNode()
 			for _, c := range val {
-				newNode.Kad.Rtable.AddContact(c)
+				newNode.Rtable.AddContact(c)
 			}
 
 
@@ -74,7 +74,7 @@ func main() {
 	//out := make(chan []d.Contact)
 	wg.Add(2)
 	go newNode.Listen(me, iPort) //Handle any RPC
-	go d.Cli(newNode)
+	go newNode.Cli()
 	wg.Wait()
 
 }
