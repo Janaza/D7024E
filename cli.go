@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func Cli(network *Network) {
+func (network *Network) Cli() {
 
 	cli := bufio.NewScanner(os.Stdin)
 

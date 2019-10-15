@@ -3,7 +3,6 @@ package main
 //powershell.exe -executionpolicy bypass .\run.ps1
 import (
 	d "D7024E"
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -48,12 +47,12 @@ func main() {
 			//RPC PING node c and update buckets
 			newNode.SendPingMessage(&bContact)
 
-			//Check if my bucket was updated
+			/*Check if my bucket was updated
 			myContacts := newNode.Kad.Rtable.FindClosestContacts(d.NewKademliaID("0000000000000000000000000000000000000000"), 160)
 			if len(myContacts) == 0 {
 				ErrorHandler(errors.New("pinging bootstrap failed or buckets weren't updated"))
 			}
-
+			*/
 			//iterativeFindNode for new node n
 			val := newNode.IterativeFindNode()
 			for _, c := range val {
@@ -72,9 +71,10 @@ func main() {
 
 	}
 	//out := make(chan []d.Contact)
+	//
 	wg.Add(2)
-	go newNode.Listen(me, iPort) //Handle any RPC
-	go d.Cli(newNode)
+	go newNode.Listen(me, iPort)
+	go newNode.Cli()
 	wg.Wait()
 
 }
