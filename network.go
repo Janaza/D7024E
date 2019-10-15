@@ -127,7 +127,6 @@ func HandlePongMsg(msg []byte) Contact {
 func ipToString(array []byte) string {
 	ipString := string(array[1+ID_INDEX:])
 	return ipString
-
 }
 
 func (network *Network) msgHandle(msg []byte, resp response) []Contact {
@@ -172,10 +171,11 @@ func (network *Network) Listen(contact Contact, port int) {
 
 	}
 }
+
 func (network *Network) SendPingMessage(contact *Contact) {
 	me := network.Contact
-	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
-	connection, err := net.DialUDP("udp", nil, RemoteAddress)
+	//RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
+	connection, err := net.DialTimeout("udp", contact.Address, time.Second*3)
 	ErrorHandler(err)
 	defer connection.Close()
 	msg := PingMsg(me)
@@ -183,13 +183,21 @@ func (network *Network) SendPingMessage(contact *Contact) {
 	ErrorHandler(err)
 	fmt.Println("sent: " + string(msg))
 	respmsg := make([]byte, 1024)
-	n, err := connection.Read(respmsg)
-	ErrorHandler(err)
-
-	if string(respmsg[:4]) == "PONG" {
-		pongContact := HandlePongMsg(respmsg[5:n])
-		network.Kad.Rtable.AddContact(pongContact)
-		fmt.Println("recv: PONG ID: " + pongContact.ID.String() + " IP: " + pongContact.Address + "\n")
+	connection.SetReadDeadline(time.Now().Add(5 * time.Second))
+	for {
+		n, err := connection.Read(respmsg)
+		if err != nil {
+			if e, ok := err.(net.Error); !ok || !e.Timeout() {
+				ErrorHandler(err)
+			}
+			break
+		}
+		ErrorHandler(err)
+		if string(respmsg[:4]) == "PONG" {
+			pongContact := HandlePongMsg(respmsg[5:n])
+			network.Kad.Rtable.AddContact(pongContact)
+			fmt.Println("recv: PONG ID: " + pongContact.ID.String() + " IP: " + pongContact.Address + "\n")
+		}
 	}
 }
 
