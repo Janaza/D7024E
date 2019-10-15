@@ -151,29 +151,31 @@ func (network *Network) Listen(contact Contact, port int) {
 }
 
 func (network *Network) SendPingMessage(contact *Contact) {
-	connection, err := net.DialTimeout("udp", contact.Address, time.Second*3)
+	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
+	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)
 	defer connection.Close()
 	msg, err := json.Marshal(createMsg("ping", network.Contact, nil))
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
 	fmt.Println("SENT: " + string(msg))
+	data := data{}
 	respmsg := make([]byte, 65536)
 	connection.SetReadDeadline(time.Now().Add(1 * time.Second))
 	for {
 		n, err := connection.Read(respmsg)
 		if err != nil {
-			if e, ok := err.(net.Error); !ok || !e.Timeout() {
-				ErrorHandler(err)
+			if e, ok := err.(net.Error); !ok && !e.Timeout() {
+				ErrorHandler(e)
+				break
 			}
-			break
-		} else {
-			data := data{}
-			err = json.Unmarshal(respmsg[:n], &data)
-			ErrorHandler(err)
-			network.rpcHandle(data, response{})
+			fmt.Println("Node offline!")
 			break
 		}
+		err = json.Unmarshal(respmsg[:n], &data)
+		ErrorHandler(err)
+		network.rpcHandle(data, response{})
+		break
 	}
 }
 
