@@ -8,15 +8,11 @@ import (
 )
 
 type Kademlia struct {
-	Rtable  *RoutingTable
-	data    []dataStruct
+	Rtable *RoutingTable
 	net     Network
 	hashmap map[string][]byte
 }
-type dataStruct struct {
-	Hash  string
-	Value []byte
-}
+
 type Shortlist struct {
 	ls []Contact
 	v  map[string]bool
@@ -71,7 +67,7 @@ func (kademlia *Kademlia) LookupContact(network Network, result chan []Contact, 
 		sl.ls = qsort(sl.ls, target)
 		iRoutines--
 		if closestNode.ID.String() != sl.ls[0].ID.String() {
-			closestNode.ID = sl.ls[0].ID
+			closestNode = sl.ls[0]
 			for i := range sl.ls {
 				if i >= a || i >= len(sl.ls) {
 					break

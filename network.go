@@ -120,12 +120,6 @@ func (network *Network) HandleFindDataMsg(msg string, r response) {
 	}
 }
 
-func ipToString(array []byte) string {
-	ipString := string(array[1+ID_INDEX:])
-	return ipString
-
-}
-
 func (network *Network) rpcHandle(msg data, r response) {
 	switch {
 	case strings.ToLower(msg.Rpc) == "ping":
@@ -182,10 +176,10 @@ func (network *Network) SendPingMessage(contact *Contact) {
 	network.rpcHandle(data, response{})
 }
 
-func (network *Network) SendPongMessage(c response) {
+func (network *Network) SendPongMessage(r response) {
 	msg, err := json.Marshal(createMsg("pong", network.Contact, nil))
 	ErrorHandler(err)
-	_, err = c.servr.WriteToUDP(msg, c.resp)
+	_, err = r.servr.WriteToUDP(msg, r.resp)
 	ErrorHandler(err)
 	fmt.Println("SENT: ", "pong ", network.Contact)
 }
@@ -230,8 +224,8 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact, found
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	ErrorHandler(err)
 	defer connection.Close()
-	Response := &data{Id: hash, Rpc: "find_value"}
-	msg, err := json.Marshal(Response)
+	d := &data{Id: hash, Rpc: "find_value"}
+	msg, err := json.Marshal(d)
 	_, err = connection.Write(msg)
 	ErrorHandler(err)
 
