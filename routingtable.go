@@ -73,3 +73,4 @@ func (routingTable *RoutingTable) GetBucketIndex(id *KademliaID) int {
 
 	return IDLength*8 - 1
 }
+

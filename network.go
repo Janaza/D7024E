@@ -46,16 +46,6 @@ func ErrorHandler(err error) {
 	}
 }
 
-//creates the content of ping
-func PingMsg(contact *Contact) *data {
-	msg := &data{
-		Rpc: "ping",
-		Id:  contact.ID.String(),
-		Ip:  contact.Address,
-	}
-	return msg
-}
-
 //creates the content of any message
 func createMsg(rpc string, contact *Contact, c []Contact) *data {
 	msg := &data{
@@ -159,9 +149,9 @@ func (network *Network) Listen(contact Contact, port int) {
 
 	}
 }
+
 func (network *Network) SendPingMessage(contact *Contact) {
-	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
-	connection, err := net.DialUDP("udp", nil, RemoteAddress)
+	connection, err := net.DialTimeout("udp", contact.Address, time.Second*3)
 	ErrorHandler(err)
 	defer connection.Close()
 	msg, err := json.Marshal(createMsg("ping", network.Contact, nil))
@@ -169,11 +159,22 @@ func (network *Network) SendPingMessage(contact *Contact) {
 	ErrorHandler(err)
 	fmt.Println("SENT: " + string(msg))
 	respmsg := make([]byte, 65536)
-	n, err := connection.Read(respmsg)
-	data := data{}
-	err = json.Unmarshal(respmsg[:n], &data)
-	ErrorHandler(err)
-	network.rpcHandle(data, response{})
+	connection.SetReadDeadline(time.Now().Add(1 * time.Second))
+	for {
+		n, err := connection.Read(respmsg)
+		if err != nil {
+			if e, ok := err.(net.Error); !ok || !e.Timeout() {
+				ErrorHandler(err)
+			}
+			break
+		} else {
+			data := data{}
+			err = json.Unmarshal(respmsg[:n], &data)
+			ErrorHandler(err)
+			network.rpcHandle(data, response{})
+			break
+		}
+	}
 }
 
 func (network *Network) SendPongMessage(r response) {
