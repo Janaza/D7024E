@@ -10,20 +10,44 @@ import (
 )
 
 type Network struct {
-	IP      string
-	Port    int
 	Contact *Contact
 	Kad     *Kademlia
 }
 
-func InitNode(ip string, port int, me *Contact) *Network {
+func InitNode(me *Contact) *Network {
 	network := &Network{
-		IP:      ip,
-		Port:    port,
 		Contact: me,
 		Kad:     InitKad(*me),
 	}
+	fmt.Println("I am: ", me.ID, me.Address+"\n")
 	return network
+}
+
+//InitJoin joins a network with given IP address
+//Grabs ip from eth0
+//Pings given bootstrap ip and finds new nodes with IterativeFindNode
+func InitJoin(myport string, bIP string) *Network {
+	myip, err := Eth0IP()
+	ErrorHandler(err)
+
+	bContact := NewContact(nil, bIP)
+	me := NewContact(NewRandomKademliaID(), myip+":"+myport)
+	newNode := InitNode(&me)
+	newNode.SendPingMessage(&bContact)
+	val := newNode.IterativeFindNode()
+	for _, c := range val {
+		newNode.Kad.Rtable.AddContact(c)
+	}
+	return newNode
+}
+
+//InitBootstrap inits a new node with no known nodes
+func InitBootstrap(myport string) *Network {
+	myip, err := Eth0IP()
+	ErrorHandler(err)
+	me := NewContact(NewRandomKademliaID(), myip+":"+myport)
+	newNode := InitNode(&me)
+	return newNode
 }
 
 type response struct {
@@ -126,7 +150,7 @@ func (network *Network) rpcHandle(msg data, r response) {
 		fmt.Println("Unknown RPC: " + msg.Rpc)
 	}
 }
-func (network *Network) Listen(contact Contact, port int) {
+func (network *Network) Listen(contact Contact) {
 	fmt.Println("Kademlia listener is starting...")
 	listenAdrs, err := net.ResolveUDPAddr("udp", contact.Address)
 	ErrorHandler(err)
