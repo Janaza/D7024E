@@ -37,9 +37,8 @@ func Eth0IP() (string, error) {
 				if ip == nil {
 					continue // not an ipv4 address
 				}
-				if strings.Index(ip.String(), "10.") == 0 { //IP should start at 10. within containers
-					return ip.String(), nil
-				}
+				return ip.String(), nil
+				
 
 			}
 		}
