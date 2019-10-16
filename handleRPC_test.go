@@ -2,6 +2,21 @@ package D7024E
 
 import "testing"
 
+var newCont = Contact{
+ID:       NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+Address:  "localhost:8000",
+distance: NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+}
+
+var newKad = Kademlia{
+Rtable:  NewRoutingTable(newCont),
+hashmap: make(map[string][]byte),
+}
+var newNet = Network{
+Contact: &newCont,
+Kad:     &newKad,
+}
+
 func TestNetwork_HandleStoreMsg(t *testing.T) {
 	type fields struct {
 		Contact *Contact
@@ -16,8 +31,9 @@ func TestNetwork_HandleStoreMsg(t *testing.T) {
 		fields fields
 		args   args
 	}{
-		// TODO: Add test cases.
+
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			network := &Network{

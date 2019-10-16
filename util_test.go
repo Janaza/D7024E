@@ -50,19 +50,27 @@ func TestByteToContact(t *testing.T) {
 }
 
 func TestContactToByte(t *testing.T) {
-	type args struct {
-		contactArr []Contact
+	newCont := Contact{
+		distance: NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+		ID:NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+		Address:"1",
 	}
+	newWhat := []byte(newCont.ID.String() + " "+ newCont.Address + " " + newCont.distance.String()+"\n")
+	newArr := make([]byte,0)
+	newArr = append(newArr,newWhat[:]... )
+	contactarr := []Contact{}
+	contactarr = append(contactarr, newCont)
+	fmt.Println(contactarr[0])
+	fmt.Println(newArr)
 	tests := []struct {
-		name string
-		args args
+		args []Contact
 		want []byte
 	}{
-		// TODO: Add test cases.
+		{contactarr,newArr},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := ContactToByte(tt.args.contactArr); !reflect.DeepEqual(got, tt.want) {
+		t.Run(tt.args[0].Address, func(t *testing.T) {
+			if got := ContactToByte(tt.args); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ContactToByte() = %v, want %v", got, tt.want)
 			}
 		})
