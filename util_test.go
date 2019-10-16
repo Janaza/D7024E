@@ -4,66 +4,25 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
-	"time"
 )
 
-func TestEth0IP(t *testing.T) {
-	tests := []struct {
-		name    string
-		want    string
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := Eth0IP()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Eth0IP() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("Eth0IP() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestByteToContact(t *testing.T) {
-	type args struct {
-		msg []byte
-	}
+	c := make([]Contact, 0)
+	c = append(c, NewContact(NewKademliaID("ffffffff00000000000000000000000000000000"), "localhost:1"))
+	fmt.Println(c[0].ID.String())
 	tests := []struct {
 		name string
-		args args
+		args []byte
 		want []Contact
 	}{
-		// TODO: Add test cases.
+		{
+			"ByteToContact1", []byte(c[0].ID.String() + " " + c[0].Address + " "), c,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ByteToContact(tt.args.msg); !reflect.DeepEqual(got, tt.want) {
+			if got := ByteToContact(tt.args); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ByteToContact() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestContactToByte(t *testing.T) {
-	type args struct {
-		contactArr []Contact
-	}
-	tests := []struct {
-		name string
-		args args
-		want []byte
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := ContactToByte(tt.args.contactArr); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ContactToByte() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -82,33 +41,24 @@ func TestHashData(t *testing.T) {
 }
 
 func TestQuicksort(t *testing.T) {
-	var randomList []Contact
+
 	target := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
 	node1 := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA"), "localhost:8001")
 	node2 := NewContact(NewKademliaID("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"), "localhost:8002")
 	node3 := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE"), "localhost:8003")
 	node4 := NewContact(NewKademliaID("1111111111111111111111111111111111111111"), "localhost:8004")
-	var contactList []Contact
-	contactList = append(contactList, node1, node2, node3, node4)
-	/*	//sortedList := qsort(contactList, target)
-		fmt.Println("The closests contacts too " + target.ID.String() + " are: ")
-		for i := range sortedList{
-			fmt.Println(sortedList[i].ID.String())
-		}*/
+	var unsortedList []Contact
+	var sortedList []Contact
+	unsortedList = append(unsortedList, node1, node2, node3, node4)
+	sortedList = append(sortedList, node3, node1, node2, node4)
 
-	for b := 0; b < 5; b++ {
-		randomContact := NewContact(NewRandomKademliaID(), "localhost:800"+string(b))
-		time.Sleep(1 * time.Second)
-		randomList = append(randomList, randomContact)
-	}
-	fmt.Println("The randomized list: ")
-	for a := range randomList {
-		fmt.Println(randomList[a].ID)
-	}
-	sortedRandom := qsort(randomList, target)
-	fmt.Println("Sorting target is fffff....")
-	fmt.Println("The sorted list: ")
-	for a := range sortedRandom {
-		fmt.Println(sortedRandom[a].ID)
+	quickSortedList := qsort(unsortedList, target)
+
+	for i := range quickSortedList {
+		t.Run("sorting test", func(t *testing.T) {
+			if got := quickSortedList[i].ID.String(); !reflect.DeepEqual(got, sortedList[i].ID.String()) {
+				t.Errorf("quickSortedList = %v, want %v", got, sortedList[i])
+			}
+		})
 	}
 }
