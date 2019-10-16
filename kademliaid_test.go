@@ -2,6 +2,7 @@ package D7024E
 
 import (
 	"testing"
+	"time"
 )
 
 
@@ -17,6 +18,7 @@ func TestKademliaID_Less(t *testing.T) {
 }
 func TestKademliaID_Equals(t *testing.T) {
 	testID1 := NewRandomKademliaID()
+	time.Sleep(1 * time.Second)
 	testID2 := NewRandomKademliaID()
 	//Should give value "false"
 	falseCase := (testID1.Equals(testID2))
