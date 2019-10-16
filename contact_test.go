@@ -4,6 +4,9 @@ import (
 	"testing"
 )
 
+
+// Test function for Contacts NewContact function, test fails if
+// got is not equal to a dummy contact with same id and address.
 func Test_NewContact(t *testing.T){
 
 	got := NewContact(NewKademliaID("ffffffff00000000000000000000000000000001"),"localhost:1")
@@ -13,6 +16,8 @@ func Test_NewContact(t *testing.T){
 
 }
 
+// Test function for Contacts CalcDistance function, test fails if
+// distance from got to identical ID is not equal to a kademlia ID of zeros.
 func TestContact_CalcDistance(t *testing.T) {
 	got := NewContact(NewKademliaID("ffffffff00000000000000000000000000000001"), "localhost:1")
 	test1 := NewKademliaID("ffffffff00000000000000000000000000000001")
@@ -22,6 +27,8 @@ func TestContact_CalcDistance(t *testing.T) {
 	}
 }
 
+// Test function for Contacts Less function, test fails if
+// got returns false.
 func TestContact_Less(t *testing.T) {
 	contact1 := NewContact(NewKademliaID("ffffffff00000000000000000000000000000002"), "localhost:1")
 	contact2 := NewContact(NewKademliaID("ffffffff00000000000000000000000000000001"), "localhost:2")
@@ -34,6 +41,8 @@ func TestContact_Less(t *testing.T) {
 	}
 }
 
+// Test function for Contacts String function, test fails if
+// got.String is not equal to a test dummy of how a contact string should be.
 func TestContact_String(t *testing.T) {
 	got := NewContact(NewKademliaID("ffffffff00000000000000000000000000000001"), "localhost:2")
 	test := "contact(\"ffffffff00000000000000000000000000000001\", \"localhost:2\")"
@@ -42,6 +51,8 @@ func TestContact_String(t *testing.T) {
 	}
 }
 
+// Test function for Contacts Candidates Append function, test fails if
+// got is not equal to a dummy list of contacts that is appended to got.
 func TestContactCandidates_Append(t *testing.T) {
 	var got ContactCandidates
 	contactstest := make([]Contact, 0)
@@ -52,6 +63,8 @@ func TestContactCandidates_Append(t *testing.T) {
 	}
 }
 
+// Test function for Contacts Candidates GetContacts function, test fails if
+// got is not equal to a dummy list of contacts that is appended to got.
 func TestContactCandidates_GetContacts(t *testing.T) {
 	var candidates ContactCandidates
 	contactstest := make([]Contact, 0)
@@ -69,28 +82,27 @@ func TestContactCandidates_GetContacts(t *testing.T) {
 	}
 }
 
+
+//Cannot sort the candidates
+// Test function for Contacts Candidates Sort function, test fails if
+// if candidates of sorted contacts is not equal to the sorted dummy candidates.
 /*
-// Sort the Contacts in ContactCandidates
-func (candidates *ContactCandidates) Sort() {
-	sort.Sort(candidates)
-}
-
-
 func TestContactCandidates_Sort(t *testing.T) {
 	var candidates1 ContactCandidates
 	var candidates2 ContactCandidates
 
 	contactstest1 := make([]Contact, 0)
-	contactstest1 = append(contactstest1, NewContact(NewKademliaID("ffffffff00000000000000000000000000000002"), "localhost:2"))
-	contactstest1 = append(contactstest1, NewContact(NewKademliaID("ffffffff00000000000000000000000000000001"), "localhost:1"))
+	contactstest1 = append(contactstest1, NewContact(NewKademliaID("ffffffff00000000000000000000000000000001"), "localhost:2"))
+	contactstest1 = append(contactstest1, NewContact(NewKademliaID("ffffffff00000000000000000000000000000002"), "localhost:3"))
 	candidates1.Append(contactstest1)
 	candidates1.Sort()
 	contactstest2 := make([]Contact, 0)
-	contactstest2 = append(contactstest2, NewContact(NewKademliaID("ffffffff00000000000000000000000000000001"), "localhost:1"))
-	contactstest2 = append(contactstest2, NewContact(NewKademliaID("ffffffff00000000000000000000000000000002"), "localhost:2"))
+	contactstest2 = append(contactstest2, NewContact(NewKademliaID("ffffffff00000000000000000000000000000002"), "localhost:3"))
+	contactstest2 = append(contactstest2, NewContact(NewKademliaID("ffffffff00000000000000000000000000000001"), "localhost:2"))
 	candidates2.Append(contactstest2)
 	got := candidates1.GetContacts(2)
 	want := candidates2.GetContacts(2)
+
 	for i := range got{
 		if got[i].String() != want[i].String(){
 			t.Errorf("got[%v] = %v; want %v", i,  got[i], want[i])
@@ -100,6 +112,9 @@ func TestContactCandidates_Sort(t *testing.T) {
 */
 
 
+
+// Test function for Contacts Candidates Len function, test fails if
+// got length is not equal to 2 (number of appended dummy contacts).
 func TestContactCandidates_Len(t *testing.T) {
 	var got ContactCandidates
 	contactstest := make([]Contact, 0)
@@ -111,6 +126,8 @@ func TestContactCandidates_Len(t *testing.T) {
 	}
 }
 
+// Test function for Contacts Candidates Swap function, test fails if
+// got is not equal to a reversed dummy candidates list of 2 contacts.
 func TestContactCandidates_Swap(t *testing.T) {
 
 	var candidates1 ContactCandidates
@@ -135,14 +152,11 @@ func TestContactCandidates_Swap(t *testing.T) {
 	}
 }
 
+
+// Cannot get contact index correctly to run the Less function
+// Test function for Contacts Candidates Less function, test fails if
+// if contact[0] is not smaller than contact[1].
 /*
-// Less returns true if the Contact at index i is smaller than
-// the Contact at index j
-func (candidates *ContactCandidates) Less(i, j int) bool {
-	return candidates.contacts[i].Less(&candidates.contacts[j])
-}
-
-
 func TestContactCandidates_Less(t *testing.T) {
 
 	var candidates ContactCandidates
@@ -151,9 +165,12 @@ func TestContactCandidates_Less(t *testing.T) {
 	contactstest = append(contactstest, NewContact(NewKademliaID("ffffffff00000000000000000000000000000001"), "localhost:2"))
 	contactstest = append(contactstest, NewContact(NewKademliaID("ffffffff00000000000000000000000000000009"), "localhost:3"))
 	candidates.Append(contactstest)
-	if candidates.Less(0,1) == false{
-		t.Errorf("got = %v; want true",  candidates.Less(0,1))
+	candidates.GetContacts(2)
+	got := candidates.Less(0,1)
+
+	if got == false{
+		t.Errorf("got = %v; want true",  got)
 	}
 }
-
 */
+
