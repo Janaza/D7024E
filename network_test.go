@@ -108,25 +108,26 @@ func TestErrorHandler(t *testing.T) {
 }
 
 func Test_createMsg(t *testing.T) {
-	type args struct {
-		rpc     string
-		contact *Contact
-		c       []Contact
+	newCont := Contact{
+		ID:       NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+		Address:  "localhost:8000",
+		distance: NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
 	}
-	tests := []struct {
-		name string
-		args args
-		want *data
-	}{
-		// TODO: Add test cases.
+
+	newData := &data{
+		Rpc:      "ping",
+		Id:       newCont.ID.String(),
+		Ip:       newCont.Address,
+		Contacts: nil,
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := createMsg(tt.args.rpc, tt.args.contact, tt.args.c); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("createMsg() = %v, want %v", got, tt.want)
+
+
+		t.Run("TestMSg", func(t *testing.T) {
+			if got := createMsg("ping", &newCont, nil); !reflect.DeepEqual(got, newData) {
+				t.Errorf("createMsg() = %v, want %v", got, newData)
 			}
 		})
-	}
+
 }
 
 func TestNetwork_updateBuckets(t *testing.T) {
