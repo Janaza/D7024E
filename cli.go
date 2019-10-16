@@ -40,13 +40,16 @@ func (network *Network) Cli() {
 		//Must ping an address
 		case strings.Contains(text, "PING "):
 			node := NewContact(nil, text[5:])
-			network.SendPingMessage(&node)
+			msg, err := SendPingMessage(&node, network.Contact)
+			if err == nil {
+				network.rpcHandle(msg, response{})
+			}
 
 		//Must store a 3 characters to a given IP
 		case strings.Contains(text, "STORE "):
 			storeData := []byte(text[6:9])
 			node := NewContact(nil, text[10:])
-			network.SendStoreMessage(&node, storeData)
+			SendStoreMessage(&node, storeData)
 
 		case text == "CONTACTS":
 			for _, i := range network.Kad.Rtable.FindClosestContacts(NewKademliaID("0000000000000000000000000000000000000000"), 160) {
