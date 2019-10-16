@@ -32,7 +32,7 @@ func SendPingMessage(contact *Contact, me *Contact) (data, error) {
 		err = json.Unmarshal(respmsg[:n], &data)
 		ErrorHandler(err)
 		return data, nil
-		break
+
 	}
 	return data, err
 }
@@ -45,13 +45,13 @@ func SendPongMessage(r response, me *Contact) {
 	fmt.Println("SENT: ", "pong ", me)
 }
 
-func SendFindContactMessage(contact *Contact, found chan []Contact, sl *Shortlist) {
+func SendFindContactMessage(contact *Contact, found chan []Contact, sl *Shortlist, target *Contact) {
 	RemoteAddress, err := net.ResolveUDPAddr("udp", contact.Address)
 	connection, err := net.DialUDP("udp", nil, RemoteAddress)
 	connection.SetDeadline(time.Now().Add(50 * time.Millisecond))
 	ErrorHandler(err)
 	defer connection.Close()
-	msg, err := json.Marshal(createMsg("find_node", contact, nil))
+	msg, err := json.Marshal(createMsg("find_node", target, nil))
 	ErrorHandler(err)
 	_, err = connection.Write(msg)
 	fmt.Println("SENT: " + string(msg) + " to: " + contact.Address)

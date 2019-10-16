@@ -14,25 +14,35 @@ import (
 }*/
 
 func TestInitNode(t *testing.T) {
-	type args struct {
-		me *Contact
+	newCont := Contact{
+		ID:       NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+		Address:  "1",
+		distance: NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
 	}
+	newKad := Kademlia{
+		Rtable:  NewRoutingTable(newCont),
+		hashmap: make(map[string][]byte),
+	}
+	newNet := Network{
+		Contact: &newCont,
+		Kad:     &newKad,
+	}
+
 	tests := []struct {
-		name string
-		args args
+		args *Contact
 		want *Network
 	}{
-		// TODO: Add test cases.
+		{&newCont, &newNet},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := InitNode(tt.args.me); !reflect.DeepEqual(got, tt.want) {
+		t.Run(tt.args.Address, func(t *testing.T) {
+			if got := InitNode(tt.args); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("InitNode() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
-
+//initbootstrap port 1, och myport 2
 func TestInitJoin(t *testing.T) {
 	type args struct {
 		myport string
@@ -55,19 +65,29 @@ func TestInitJoin(t *testing.T) {
 }
 
 func TestInitBootstrap(t *testing.T) {
-	type args struct {
-		myport string
+
+	newCont := Contact{
+		ID:       NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+		Address:  "localhost:8000",
+		distance: NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+	}
+	newKad := Kademlia{
+		Rtable:  NewRoutingTable(newCont),
+		hashmap: make(map[string][]byte),
+	}
+	newNet := Network{
+		Contact: &newCont,
+		Kad:     &newKad,
 	}
 	tests := []struct {
-		name string
-		args args
+		args string
 		want *Network
 	}{
-		// TODO: Add test cases.
+		{"8000",&newNet},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := InitBootstrap(tt.args.myport); !reflect.DeepEqual(got, tt.want) {
+		t.Run("Init bootstrap", func(t *testing.T) {
+			if got := InitBootstrap(tt.args); !reflect.DeepEqual(got.Contact.Address, tt.want.Contact.Address) {
 				t.Errorf("InitBootstrap() = %v, want %v", got, tt.want)
 			}
 		})
@@ -75,42 +95,39 @@ func TestInitBootstrap(t *testing.T) {
 }
 
 func TestErrorHandler(t *testing.T) {
-	type args struct {
-		err error
-	}
 	tests := []struct {
-		name string
-		args args
+		args error
 	}{
-		// TODO: Add test cases.
+		{nil},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ErrorHandler(tt.args.err)
+		t.Run("No errors found", func(t *testing.T) {
+			ErrorHandler(tt.args)
 		})
 	}
 }
 
 func Test_createMsg(t *testing.T) {
-	type args struct {
-		rpc     string
-		contact *Contact
-		c       []Contact
+	newCont := Contact{
+		ID:       NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+		Address:  "localhost:8000",
+		distance: NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
 	}
-	tests := []struct {
-		name string
-		args args
-		want *data
-	}{
-		// TODO: Add test cases.
+
+	newData := &data{
+		Rpc:      "ping",
+		Id:       newCont.ID.String(),
+		Ip:       newCont.Address,
+		Contacts: nil,
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := createMsg(tt.args.rpc, tt.args.contact, tt.args.c); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("createMsg() = %v, want %v", got, tt.want)
+
+
+		t.Run("TestMSg", func(t *testing.T) {
+			if got := createMsg("ping", &newCont, nil); !reflect.DeepEqual(got, newData) {
+				t.Errorf("createMsg() = %v, want %v", got, newData)
 			}
 		})
-	}
+
 }
 
 func TestNetwork_updateBuckets(t *testing.T) {
