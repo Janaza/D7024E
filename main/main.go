@@ -4,6 +4,7 @@ package main
 import (
 	d "D7024E"
 	"flag"
+	"os"
 	"runtime"
 	"sync"
 )
@@ -25,7 +26,7 @@ func main() {
 
 	wg.Add(2)
 	go newNode.Listen(*newNode.Contact)
-	go newNode.Cli()
+	go newNode.CliHelper(os.Stdin)
 	wg.Wait()
 
 }

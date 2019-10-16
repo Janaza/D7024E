@@ -43,7 +43,7 @@ func (kademlia *Kademlia) LookupContact(me *Contact, result chan []Contact, targ
 	}
 
 	for iRoutines < a && iRoutines < len(sl.ls) {
-		go SendFindContactMessage(&sl.ls[iRoutines], found, sl)
+		go SendFindContactMessage(&sl.ls[iRoutines], found, sl, &target)
 		x = <-found
 		sl.v[sl.ls[iRoutines].ID.String()] = true
 		iRoutines++
@@ -70,7 +70,7 @@ func (kademlia *Kademlia) LookupContact(me *Contact, result chan []Contact, targ
 				}
 				if sl.v[sl.ls[i].ID.String()] == false {
 					iRoutines++
-					go SendFindContactMessage(&sl.ls[i], found, sl)
+					go SendFindContactMessage(&sl.ls[i], found, sl, &target)
 					x = <-found
 					sl.v[sl.ls[i].ID.String()] = true
 				}
@@ -83,7 +83,7 @@ func (kademlia *Kademlia) LookupContact(me *Contact, result chan []Contact, targ
 			break
 		}
 		if sl.v[sl.ls[i].ID.String()] == false {
-			go SendFindContactMessage(&c, found, sl)
+			go SendFindContactMessage(&c, found, sl, &target)
 			x = <-found
 			sl.v[c.ID.String()] = true
 		}
