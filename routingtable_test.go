@@ -21,9 +21,6 @@ func TestRoutingTable(t *testing.T) {
 	}
 }
 
-func TestNetwork_HandleStoreMsg(t *testing.T) {
-
-}
 /*func TestStoreMsg(t *testing.T) {
 	storeVal := []byte("h")
 	svar := HashData(storeVal)
@@ -33,9 +30,3 @@ func TestNetwork_HandleStoreMsg(t *testing.T) {
 	fmt.Println(string(testMsg))
 
 }*/
-
-
-
-
-
-
