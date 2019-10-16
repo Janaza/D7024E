@@ -28,35 +28,6 @@ func TestByteToContact(t *testing.T) {
 	}
 }
 
-
-func TestContactToByte(t *testing.T) {
-	newCont := Contact{
-		distance: NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
-		ID:NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
-		Address:"1",
-	}
-	newWhat := []byte(newCont.ID.String() + " "+ newCont.Address + " " + newCont.distance.String()+"\n")
-	newArr := make([]byte,0)
-	newArr = append(newArr,newWhat[:]... )
-	contactarr := []Contact{}
-	contactarr = append(contactarr, newCont)
-	fmt.Println(contactarr[0])
-	fmt.Println(newArr)
-	tests := []struct {
-		args []Contact
-		want []byte
-	}{
-		{contactarr,newArr},
-	}
-	for _, tt := range tests {
-		t.Run(tt.args[0].Address, func(t *testing.T) {
-			if got := ContactToByte(tt.args); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ContactToByte() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestHashData(t *testing.T) {
 	fmt.Println("Testing the hasher: ")
 	testArray := []byte("123")

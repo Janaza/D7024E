@@ -6,19 +6,19 @@ import (
 )
 
 func TestInitKad(t *testing.T) {
-	kad := &Kademlia{
-		Rtable:  NewRoutingTable(NewContact(NewKademliaID("1"),"")),
-		hashmap: make(map[string][]byte),
+	type args struct {
+		me Contact
 	}
 	tests := []struct {
-		args Contact
+		name string
+		args args
 		want *Kademlia
 	}{
-		{NewContact(NewKademliaID("1"), ""),kad},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
-		t.Run(tt.args.Address, func(t *testing.T) {
-			if got := InitKad(tt.args); !reflect.DeepEqual(got, tt.want) {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := InitKad(tt.args.me); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("InitKad() = %v, want %v", got, tt.want)
 			}
 		})

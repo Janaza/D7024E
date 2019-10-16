@@ -14,35 +14,25 @@ import (
 }*/
 
 func TestInitNode(t *testing.T) {
-	newCont := Contact{
-		ID:       NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
-		Address:  "1",
-		distance: NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+	type args struct {
+		me *Contact
 	}
-	newKad := Kademlia{
-		Rtable:  NewRoutingTable(newCont),
-		hashmap: make(map[string][]byte),
-	}
-	newNet := Network{
-		Contact: &newCont,
-		Kad:     &newKad,
-	}
-
 	tests := []struct {
-		args *Contact
+		name string
+		args args
 		want *Network
 	}{
-		{&newCont, &newNet},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
-		t.Run(tt.args.Address, func(t *testing.T) {
-			if got := InitNode(tt.args); !reflect.DeepEqual(got, tt.want) {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := InitNode(tt.args.me); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("InitNode() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
-//initbootstrap port 1, och myport 2
+
 func TestInitJoin(t *testing.T) {
 	type args struct {
 		myport string
@@ -65,29 +55,19 @@ func TestInitJoin(t *testing.T) {
 }
 
 func TestInitBootstrap(t *testing.T) {
-
-	newCont := Contact{
-		ID:       NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
-		Address:  "localhost:8000",
-		distance: NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
-	}
-	newKad := Kademlia{
-		Rtable:  NewRoutingTable(newCont),
-		hashmap: make(map[string][]byte),
-	}
-	newNet := Network{
-		Contact: &newCont,
-		Kad:     &newKad,
+	type args struct {
+		myport string
 	}
 	tests := []struct {
-		args string
+		name string
+		args args
 		want *Network
 	}{
-		{"8000",&newNet},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
-		t.Run("Init bootstrap", func(t *testing.T) {
-			if got := InitBootstrap(tt.args); !reflect.DeepEqual(got.Contact.Address, tt.want.Contact.Address) {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := InitBootstrap(tt.args.myport); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("InitBootstrap() = %v, want %v", got, tt.want)
 			}
 		})
@@ -95,14 +75,18 @@ func TestInitBootstrap(t *testing.T) {
 }
 
 func TestErrorHandler(t *testing.T) {
+	type args struct {
+		err error
+	}
 	tests := []struct {
-		args error
+		name string
+		args args
 	}{
-		{nil},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
-		t.Run("No errors found", func(t *testing.T) {
-			ErrorHandler(tt.args)
+		t.Run(tt.name, func(t *testing.T) {
+			ErrorHandler(tt.args.err)
 		})
 	}
 }
