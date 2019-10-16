@@ -34,10 +34,10 @@ go build .\main.go
 You are now ready to run the main using the following command:
 
 ```bash
-.\main.exe <arg1> <arg2(optional)>
+.\main.exe -port *port* -bootstrapIP *IP* (optional)
 ```
 
-where <arg1> specifies which port to use and <arg2> specifies which port to listen for.
+where <-port> specifies which port to use and <-bootstrapIP> specifies which ip to connect to, just starts listener if ommited.
 
 
 #### Docker script
@@ -45,7 +45,8 @@ where <arg1> specifies which port to use and <arg2> specifies which port to list
 However, the main itself is not an effective way to spin up many nodes so you 
 can use a docker script that provides you with 50 nodes all part of the same Kademlia network.
 
-> To be continued...
+Start cluster with ```main/run.sh``` (OBS terminates any running containers!)
+``` chmod +x run.sh ``` if necessary
 
 ## Command Line Interface
 
