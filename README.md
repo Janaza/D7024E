@@ -82,8 +82,3 @@ CLI for retrieving the k closest contacts from a node.
 ```bash
 CONTACTS
 ```
-
-## System Architecture
-UML Diagram of the system:
-
->in progress...
