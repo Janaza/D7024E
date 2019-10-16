@@ -2,6 +2,7 @@ package D7024E
 
 import (
 	"container/list"
+	"strconv"
 )
 
 // bucket definition
@@ -55,4 +56,14 @@ func (bucket *bucket) GetContactAndCalcDistance(target *KademliaID) []Contact {
 // Len return the size of the bucket
 func (bucket *bucket) Len() int {
 	return bucket.list.Len()
+}
+
+func BitsToKademliaID(bArr []string) [IDLength]byte {
+	val := [IDLength]byte{}
+	for y := 0; y < IDLength; y++ {
+		t, _ := strconv.ParseUint(bArr[y], 2, 64)
+		b := byte(t)
+		val[y] = b
+	}
+	return val
 }

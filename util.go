@@ -1,6 +1,9 @@
 package D7024E
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
+	"math/rand"
 	"net"
 	"strings"
 )
@@ -38,7 +41,6 @@ func Eth0IP() (string, error) {
 					continue // not an ipv4 address
 				}
 				return ip.String(), nil
-				
 
 			}
 		}
@@ -73,4 +75,38 @@ func ContactToByte(contactArr []Contact) []byte {
 
 	return closeContactsByte
 
+}
+
+func HashData(data []byte) string {
+	hashedData := sha1.Sum(data)
+	hashedStringdata := hex.EncodeToString(hashedData[0:])
+	return hashedStringdata
+}
+
+func qsort(contact []Contact, target Contact) []Contact {
+	if len(contact) < 2 {
+		return contact
+	}
+
+	left, right := 0, len(contact)-1
+
+	pivot := rand.Int() % len(contact)
+
+	contact[pivot], contact[right] = contact[right], contact[pivot]
+
+	for i := range contact {
+		dist := contact[i].ID.CalcDistance(target.ID)
+		distr := contact[right].ID.CalcDistance(target.ID)
+		if dist.Less(distr) {
+			contact[left], contact[i] = contact[i], contact[left]
+			left++
+		}
+	}
+
+	contact[left], contact[right] = contact[right], contact[left]
+
+	qsort(contact[:left], target)
+	qsort(contact[left+1:], target)
+
+	return contact
 }

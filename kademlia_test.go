@@ -1,50 +1,168 @@
 package D7024E
 
-import(
-	"fmt"
+import (
+	"reflect"
 	"testing"
-	"time"
 )
 
-func TestQuicksort(t *testing.T) {
-	var randomList []Contact
-	target := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
-	node1 := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA"), "localhost:8001")
-	node2 := NewContact(NewKademliaID("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"), "localhost:8002")
-	node3 := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE"), "localhost:8003")
-	node4 := NewContact(NewKademliaID("1111111111111111111111111111111111111111"), "localhost:8004")
-	var contactList []Contact
-	contactList  = append(contactList, node1, node2, node3, node4)
-/*	//sortedList := qsort(contactList, target)
-	fmt.Println("The closests contacts too " + target.ID.String() + " are: ")
-	for i := range sortedList{
-		fmt.Println(sortedList[i].ID.String())
-	}*/
-
-	for b :=0 ; b<5; b++  {
-		randomContact := NewContact(NewRandomKademliaID(), "localhost:800" + string(b))
-		time.Sleep(1 * time.Second)
-		randomList = append(randomList, randomContact)
+func TestInitKad(t *testing.T) {
+	type args struct {
+		me Contact
 	}
-	fmt.Println("The randomized list: ")
-	for a:=range randomList{
-		fmt.Println(randomList[a].ID)
+	tests := []struct {
+		name string
+		args args
+		want *Kademlia
+	}{
+		// TODO: Add test cases.
 	}
-	sortedRandom := qsort(randomList, target)
-	fmt.Println("Sorting target is fffff....")
-	fmt.Println("The sorted list: ")
-	for a:=range sortedRandom{
-		fmt.Println(sortedRandom[a].ID)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := InitKad(tt.args.me); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("InitKad() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
-func TestHashFunc(t *testing.T){
-	fmt.Println("Testing the hasher: ")
-	testArray := []byte("123")
-	svar := HashData(testArray)
-	if svar == "40bd001563085fc35165329ea1ff5c5ecbdbbeef"{
-		fmt.Println("Correct Hash for "+string(testArray)+"!")
-		fmt.Println(svar)
-	}else{
-		fmt.Println("Not hashed correctly!")
+
+func TestKademlia_LookupContact(t *testing.T) {
+	type fields struct {
+		Rtable  *RoutingTable
+		hashmap map[string][]byte
+	}
+	type args struct {
+		me     *Contact
+		result chan []Contact
+		target Contact
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kademlia := &Kademlia{
+				Rtable:  tt.fields.Rtable,
+				hashmap: tt.fields.hashmap,
+			}
+			kademlia.LookupContact(tt.args.me, tt.args.result, tt.args.target)
+		})
+	}
+}
+
+func TestKademlia_LookupData(t *testing.T) {
+	type fields struct {
+		Rtable  *RoutingTable
+		hashmap map[string][]byte
+	}
+	type args struct {
+		me     *Contact
+		target Contact
+		hash   string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kademlia := &Kademlia{
+				Rtable:  tt.fields.Rtable,
+				hashmap: tt.fields.hashmap,
+			}
+			if got := kademlia.LookupData(tt.args.me, tt.args.target, tt.args.hash); got != tt.want {
+				t.Errorf("Kademlia.LookupData() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestKademlia_Store(t *testing.T) {
+	type fields struct {
+		Rtable  *RoutingTable
+		hashmap map[string][]byte
+	}
+	type args struct {
+		data []byte
+		me   *Contact
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kademlia := &Kademlia{
+				Rtable:  tt.fields.Rtable,
+				hashmap: tt.fields.hashmap,
+			}
+			kademlia.Store(tt.args.data, tt.args.me)
+		})
+	}
+}
+
+func TestShortlist_insert(t *testing.T) {
+	type fields struct {
+		ls []Contact
+		v  map[string]bool
+	}
+	type args struct {
+		v bool
+		c Contact
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []Contact
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sl := &Shortlist{
+				ls: tt.fields.ls,
+				v:  tt.fields.v,
+			}
+			if got := sl.insert(tt.args.v, tt.args.c); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Shortlist.insert() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestShortlist_removeContact(t *testing.T) {
+	type fields struct {
+		ls []Contact
+		v  map[string]bool
+	}
+	type args struct {
+		c Contact
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sl := &Shortlist{
+				ls: tt.fields.ls,
+				v:  tt.fields.v,
+			}
+			sl.removeContact(tt.args.c)
+		})
 	}
 }
